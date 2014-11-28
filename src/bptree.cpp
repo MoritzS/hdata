@@ -27,11 +27,8 @@ size_t BPTree::search_in_node(BPNode* node, int32_t key) {
     // the search key. i.e. the first n*4 bits have to be 1, where n is
     // node->num_keys.
     mask |= 0xffff << (node->num_keys * 4);
-    // count the one bits in mask and divide with 4 because we are looking at 32bit ints.
-    uint16_t count = _mm_popcnt_u32(mask) / 4;
-    // If n numbers are greater or equal than the search key, count is be equal to
-    // max_keys - n. We need n so return max_keys - count.
-    return BPTREE_MAX_KEYS - count;
+    // count how many keys are smaller than the search key
+    return __tzcnt_u16(mask) / 4;
 #else
     size_t max_bound = node->num_keys;
     size_t min_bound = 0;
