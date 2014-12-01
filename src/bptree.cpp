@@ -11,7 +11,7 @@ size_t BPTree::search_in_node(BPNode* node, int32_t key) {
     mask |= 0xffffffff << (node->num_keys * 4);
     uint32_t count = _mm_popcnt_u32(mask) / 4;
     return BPTREE_MAX_KEYS - count;
-#elif BPTREE_USE_SSE2
+#elif defined(BPTREE_USE_SSE2)
     __m128i keys_sse = _mm_load_si128((__m128i*) node->keys);
     __m128i search_key = _mm_set1_epi32(key);
     keys_sse = _mm_cmpgt_epi32(keys_sse, search_key);
