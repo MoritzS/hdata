@@ -28,7 +28,11 @@ size_t BPTree::search_in_node(BPNode* node, int32_t key) {
     // node->num_keys.
     mask |= 0xffff << (node->num_keys * 4);
     // count how many keys are smaller than the search key
-    return __tzcnt_u16(mask) / 4;
+    if (mask == 0) {
+        return node->num_keys;
+    } else {
+        return __tzcnt_u16(mask) / 4;
+    }
 #else
     size_t max_bound = node->num_keys;
     size_t min_bound = 0;
