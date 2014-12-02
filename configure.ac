@@ -13,6 +13,7 @@ AC_PROG_CXX
 AX_CXX_COMPILE_STDCXX_11
 
 # Checks for libraries.
+AC_CHECK_LIB([readline], [readline])
 
 # Checks for header files.
 
