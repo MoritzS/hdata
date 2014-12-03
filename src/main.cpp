@@ -18,11 +18,17 @@
 #define MAX_LOCATIONS 4000000
 
 
-char const MODE_ADJ[] = "adj";
-char const MODE_NI[] = "ni";
-char const MODE_DELTANI[] = "deltani";
+enum Mode {
+    MODE_ADJ = 0,
+    MODE_NI = 1,
+    MODE_DELTANI = 2
+};
 
-std::vector<std::string> MODES = {MODE_ADJ, MODE_NI, MODE_DELTANI};
+char const MODE_STR_ADJ[] = "adj";
+char const MODE_STR_NI[] = "ni";
+char const MODE_STR_DELTANI[] = "deltani";
+
+std::vector<std::string> MODES = {MODE_STR_ADJ, MODE_STR_NI, MODE_STR_DELTANI};
 
 
 int main(int argc, char** argv) {
@@ -48,14 +54,22 @@ int main(int argc, char** argv) {
 
     args.parse(argc, argv);
 
-    std::string mode = modeArg.getValue();
+    std::string strMode = modeArg.getValue();
+    Mode mode;
+    if (strMode == MODE_STR_DELTANI) {
+        mode = MODE_DELTANI;
+    } else if (strMode == MODE_STR_NI) {
+        mode = MODE_NI;
+    } else {
+        mode = MODE_ADJ;
+    }
 
     if (mode != MODE_ADJ) {
         fprintf(stderr, "Only \"adj\" mode is implemented!\n");
         return 1;
     }
 
-    printf("Running in \"%s\" mode\n", mode.c_str());
+    printf("Running in \"%s\" mode\n", strMode.c_str());
 
     Location* locs = (Location*)calloc(MAX_LOCATIONS, sizeof(Location));
     if (locs == nullptr) {
