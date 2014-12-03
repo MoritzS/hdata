@@ -33,13 +33,6 @@ std::vector<std::string> MODES = {MODE_STR_ADJ, MODE_STR_NI, MODE_STR_DELTANI};
 
 int main(int argc, char** argv) {
     TCLAP::CmdLine args(PACKAGE_STRING);
-    TCLAP::ValueArg<std::string> locsArg(
-        "l", "locations",
-        "Path to locations.tbl file",
-        true,
-        "",
-        "file path"
-    );
     TCLAP::ValuesConstraint<std::string> modeConstraint(MODES);
     TCLAP::UnlabeledValueArg<std::string> modeArg(
         "mode",
@@ -48,9 +41,24 @@ int main(int argc, char** argv) {
         "",
         &modeConstraint
     );
+    TCLAP::UnlabeledValueArg<std::string> locsArg(
+        "locations",
+        "Path to locations.tbl file",
+        true,
+        "",
+        "file path"
+    );
+    TCLAP::UnlabeledValueArg<std::string> treeArg(
+        "tree",
+        "Path to mode specific tree data",
+        true,
+        "",
+        "file path"
+    );
 
-    args.add(locsArg);
     args.add(modeArg);
+    args.add(locsArg);
+    args.add(treeArg);
 
     args.parse(argc, argv);
 
