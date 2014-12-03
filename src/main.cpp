@@ -1,5 +1,6 @@
 #include <config.h>
 
+#include <cerrno>
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
@@ -63,14 +64,18 @@ int main(int argc, char** argv) {
     }
     char const* filename = locsArg.getValue().c_str();
     BPTree locs_tree;
-    printf("reading locations... ");
     FILE* locs_file = fopen(filename, "r");
-    size_t num_locs = read_locations(locs_file, MAX_LOCATIONS, locs);
+    size_t num_locs;
+    if (locs_file == nullptr) {
+        perror("couldn't read locations file");
+        goto ERROR_LOCS;
+    }
+    printf("reading locations... ");
+    num_locs = read_locations(locs_file, MAX_LOCATIONS, locs);
     fclose(locs_file);
     if (num_locs == 0) {
         printf("error\n");
-        free(locs);
-        return 1;
+        goto ERROR_LOCS;
     }
     for (size_t i=0; i<num_locs; i++) {
         locs_tree.insert((int32_t)locs[i].id, locs+i);
@@ -99,4 +104,7 @@ int main(int argc, char** argv) {
     }
     free(locs);
     return 0;
+ERROR_LOCS:
+    free(locs);
+    return 1;
 }
