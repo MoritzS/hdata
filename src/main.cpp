@@ -81,11 +81,7 @@ int main(int argc, char** argv) {
 
     printf("Running in \"%s\" mode\n", strMode.c_str());
 
-    Location* locs = (Location*)calloc(MAX_LOCATIONS, sizeof(Location));
-    if (locs == nullptr) {
-        fprintf(stderr, "couldn't allocate memory\n");
-        return 1;
-    }
+    std::vector<Location> locs(MAX_LOCATIONS);
     char const* filename = locsArg.getValue().c_str();
     BPTree locs_tree;
     FILE* locs_file = fopen(filename, "r");
@@ -101,8 +97,8 @@ int main(int argc, char** argv) {
         printf("error\n");
         goto ERROR_LOCS;
     }
-    for (size_t i=0; i<num_locs; i++) {
-        locs_tree.insert((int32_t)locs[i].id, locs+i);
+    for (Location loc : locs) {
+        locs_tree.insert((int32_t)loc.id, &loc);
     }
     printf("got %zi\n", num_locs);
     char *line;
@@ -126,9 +122,7 @@ int main(int argc, char** argv) {
         }
         add_history(line);
     }
-    free(locs);
     return 0;
 ERROR_LOCS:
-    free(locs);
     return 1;
 }

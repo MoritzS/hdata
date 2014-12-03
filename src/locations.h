@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <cstdio>
+#include <vector>
 
 struct Location {
     uint32_t id;
@@ -39,6 +40,6 @@ extern ModeInfo adjModeInfo;
 extern ModeInfo niModeInfo;
 extern ModeInfo deltaniModeInfo;
 
-size_t read_locations(FILE* file, size_t count, Location* output);
+size_t read_locations(FILE* file, size_t count, std::vector<Location>& output);
 
 #endif
