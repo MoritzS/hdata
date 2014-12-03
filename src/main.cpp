@@ -30,6 +30,8 @@ char const MODE_STR_DELTANI[] = "deltani";
 
 std::vector<std::string> MODES = {MODE_STR_ADJ, MODE_STR_NI, MODE_STR_DELTANI};
 
+ModeInfo const MODES_INFO[] = {adjModeInfo, niModeInfo, deltaniModeInfo};
+
 
 int main(int argc, char** argv) {
     TCLAP::CmdLine args(PACKAGE_STRING);

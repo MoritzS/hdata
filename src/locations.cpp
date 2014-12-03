@@ -11,3 +11,19 @@ size_t read_locations(FILE* file, size_t count, Location* output) {
     }
     return locations_read;
 }
+
+ModeInfo adjModeInfo = {
+    nullptr,
+    nullptr,
+    nullptr
+};
+ModeInfo niModeInfo = {
+    nullptr,
+    nullptr,
+    nullptr
+};
+ModeInfo deltaniModeInfo = {
+    nullptr,
+    nullptr,
+    nullptr
+};
