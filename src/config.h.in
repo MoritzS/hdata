@@ -43,6 +43,9 @@
 /* Support SSSE3 (Supplemental Streaming SIMD Extensions 3) instructions */
 #undef HAVE_SSSE3
 
+/* Define to 1 if you have the <sstream> header file. */
+#undef HAVE_SSTREAM
+
 /* Define to 1 if you have the <stdint.h> header file. */
 #undef HAVE_STDINT_H
 
@@ -60,6 +63,9 @@
 
 /* Define to 1 if you have the <sys/types.h> header file. */
 #undef HAVE_SYS_TYPES_H
+
+/* Define to 1 if you have the <tclap/CmdLine.h> header file. */
+#undef HAVE_TCLAP_CMDLINE_H
 
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H

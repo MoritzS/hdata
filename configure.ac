@@ -16,6 +16,8 @@ AX_CXX_COMPILE_STDCXX_11
 AC_CHECK_LIB([readline], [readline])
 
 # Checks for header files.
+AC_CHECK_HEADERS([sstream])
+AC_CHECK_HEADERS([tclap/CmdLine.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_TYPE_INT32_T
