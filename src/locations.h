@@ -2,7 +2,6 @@
 #define _LOCATIONS_H
 
 #include <cstdint>
-#include <cstdio>
 #include <vector>
 
 #include "bptree.h"
@@ -18,6 +17,7 @@ struct AdjacentLocation {
 };
 
 struct AdjModeData {
+    BPTree<AdjacentLocation> edges;
 };
 
 struct NiModeData {
@@ -27,6 +27,7 @@ struct DeltaniModeData{
 };
 
 union ModeData {
+    ModeData() {}
     AdjModeData adj;
     NiModeData ni;
     DeltaniModeData deltani;
