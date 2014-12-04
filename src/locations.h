@@ -33,9 +33,9 @@ union ModeData {
 };
 
 struct ModeInfo {
-    int (*init_mode)(Location*, FILE*, ModeData&);
-    int (*run_input)(Location*, ModeData&, char*);
-    int (*exit_mode)(Location*, ModeData&);
+    int (*init_mode)(FILE*, ModeData&);
+    int (*run_input)(BPTree<Location>&, ModeData&, char*);
+    int (*exit_mode)(BPTree<Location>&, ModeData&);
 };
 
 extern ModeInfo adjModeInfo;
