@@ -3,7 +3,6 @@
 
 #include <config.h>
 #include <cstdint>
-#include <cstdio>
 
 #include "sse_util.h"
 
@@ -301,41 +300,6 @@ public:
             node = node->inner.pointers[0];
         }
         return d;
-    }
-
-    void draw_tree() {
-        printf("(");
-        for (size_t i=0; i<root_node->num_keys; i++) {
-            printf(" %i", root_node->keys[i]);
-        }
-        printf(" )\n");
-        size_t d = depth();
-        if (d > 1) {
-            for (size_t i=0; i<=root_node->num_keys; i++) {
-                printf("(");
-                BPNode* node = root_node->inner.pointers[i];
-                for (size_t j=0; j<node->num_keys; j++) {
-                    printf(" %i", node->keys[j]);
-                }
-                printf(" ) ");
-            }
-            printf("\n");
-        }
-        if (d > 2) {
-            for (size_t i=0; i<=root_node->num_keys; i++) {
-                BPNode *node1 = root_node->inner.pointers[i];
-                for (size_t j=0; j<=node1->num_keys; j++) {
-                    printf("(");
-                    BPNode *node = node1->inner.pointers[j];
-                    for (size_t k=0; k<node->num_keys; k++) {
-                        printf(" %i", node->keys[k]);
-                    }
-                    printf(" ) ");
-                }
-                printf("|| ");
-            }
-            printf("\n");
-        }
     }
 };
 
