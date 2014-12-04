@@ -15,7 +15,7 @@
 #include "bptree.h"
 #include "locations.h"
 
-#define MAX_LOCATIONS 4000000
+#define MAX_LOCATIONS 10000000
 
 
 enum Mode {
@@ -90,6 +90,7 @@ int main(int argc, char** argv) {
         return 1;
     }
     printf("reading locations... ");
+    fflush(stdout);
     num_locs = read_locations(locs_file, MAX_LOCATIONS, locs_tree);
     fclose(locs_file);
     if (num_locs == 0) {
