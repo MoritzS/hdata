@@ -5,6 +5,8 @@
 #include <cstdio>
 #include <vector>
 
+#include "bptree.h"
+
 struct Location {
     uint32_t id;
     char name[128];
@@ -40,6 +42,6 @@ extern ModeInfo adjModeInfo;
 extern ModeInfo niModeInfo;
 extern ModeInfo deltaniModeInfo;
 
-size_t read_locations(FILE* file, size_t count, std::vector<Location>& output);
+size_t read_locations(FILE* file, size_t count, BPTree<Location>& output);
 
 #endif

@@ -81,24 +81,20 @@ int main(int argc, char** argv) {
 
     printf("Running in \"%s\" mode\n", strMode.c_str());
 
-    std::vector<Location> locs(MAX_LOCATIONS);
     char const* filename = locsArg.getValue().c_str();
-    BPTree locs_tree;
+    BPTree<Location> locs_tree;
     FILE* locs_file = fopen(filename, "r");
     size_t num_locs;
     if (locs_file == nullptr) {
         perror("couldn't read locations file");
-        goto ERROR_LOCS;
+        return 1;
     }
     printf("reading locations... ");
-    num_locs = read_locations(locs_file, MAX_LOCATIONS, locs);
+    num_locs = read_locations(locs_file, MAX_LOCATIONS, locs_tree);
     fclose(locs_file);
     if (num_locs == 0) {
         printf("error\n");
-        goto ERROR_LOCS;
-    }
-    for (Location loc : locs) {
-        locs_tree.insert((int32_t)loc.id, &loc);
+        return 1;
     }
     printf("got %zi\n", num_locs);
     char *line;
@@ -113,9 +109,9 @@ int main(int argc, char** argv) {
             printf("invalid id\n");
         } else {
             printf("searching id %i: ", loc_id);
-            Location* loc;
-            if (locs_tree.search((int32_t)loc_id, (void**)&loc)) {
-                printf("found \"%s\"\n", loc->name);
+            Location loc;
+            if (locs_tree.search((int32_t)loc_id, loc)) {
+                printf("found \"%s\"\n", loc.name);
             } else {
                 printf("not found\n");
             }
@@ -123,6 +119,4 @@ int main(int argc, char** argv) {
         add_history(line);
     }
     return 0;
-ERROR_LOCS:
-    return 1;
 }
