@@ -42,6 +42,6 @@ extern ModeInfo adjModeInfo;
 extern ModeInfo niModeInfo;
 extern ModeInfo deltaniModeInfo;
 
-size_t read_locations(FILE* file, size_t count, BPTree<Location>& output);
+size_t read_locations(FILE* file, BPTree<Location>& output);
 
 #endif

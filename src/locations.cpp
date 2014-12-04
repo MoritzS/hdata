@@ -1,8 +1,8 @@
 #include "locations.h"
 
-size_t read_locations(FILE* file, size_t count, BPTree<Location>& tree) {
+size_t read_locations(FILE* file, BPTree<Location>& tree) {
     size_t locations_read = 0;
-    for (size_t i = 0; i < count; i++) {
+    while(1) {
         Location loc;
         if(fscanf(file, "%u|%127[^\t\n] ", &loc.id, loc.name) == EOF) {
             break;
