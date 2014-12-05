@@ -4,45 +4,8 @@
 #include <config.h>
 #include <cstdint>
 
-#include "sse_util.h"
-
-#if !(defined(BPTREE_USE_AVX2) || defined(BPTREE_USE_SSE2) || defined (BPTREE_NO_SSE))
-
-    #ifdef HAVE_AVX2
-        #define BPTREE_USE_AVX2
-    #elif defined(HAVE_SSE2)
-        #define BPTREE_USE_SSE2
-    #endif
-
-#endif
-
-#ifdef BPTREE_USE_AVX2
-
-    #ifndef HAVE_AVX2
-        #error "requested AVX2 is not available"
-    #endif
-
-    #include <x86intrin.h>
+#ifndef BPTREE_MAX_KEYS
     #define BPTREE_MAX_KEYS 8
-    #define __BP_aligned __aligned256
-
-#elif defined(BPTREE_USE_SSE2)
-
-    #ifndef HAVE_SSE2
-        #error "requested SSE2 is not available"
-    #endif
-
-    #include <x86intrin.h>
-    #define BPTREE_MAX_KEYS 4
-    #define __BP_aligned __aligned128
-
-#else
-
-    #ifndef BPTREE_MAX_KEYS
-        #define BPTREE_MAX_KEYS 8
-    #endif
-    #define __BP_aligned
-
 #endif
 
 
@@ -70,7 +33,7 @@ private:
     struct BPNode {
         BPNodeType type;
         size_t num_keys;
-        int32_t keys[BPTREE_MAX_KEYS] __BP_aligned;
+        int32_t keys[BPTREE_MAX_KEYS];
         BPNode* parent;
         union {
             BPInnerNode inner;
@@ -88,37 +51,6 @@ private:
     }
 
     static size_t search_in_node(BPNode* node, int32_t key) {
-#ifdef BPTREE_USE_AVX2
-        __m256i keys_sse = _mm256_load_si256((__m256i*) node->keys);
-        __m256i search_key = _mm256_set1_epi32(key);
-        keys_sse = _mm256_cmpgt_epi32(keys_sse, search_key);
-        uint32_t mask = _mm256_movemask_epi8(keys_sse);
-        mask |= 0xffffffff << (node->num_keys * 4);
-        uint32_t count = _mm_popcnt_u32(mask) / 4;
-        return BPTREE_MAX_KEYS - count;
-#elif defined(BPTREE_USE_SSE2)
-        __m128i keys_sse = _mm_load_si128((__m128i*) node->keys);
-        __m128i search_key = _mm_set1_epi32(key);
-        keys_sse = _mm_cmpgt_epi32(keys_sse, search_key);
-        uint16_t mask = _mm_movemask_epi8(keys_sse);
-        // mask now looks like this:
-        // 0b1111111100000000
-        // It has 16 bits.
-        // The first n*4 bits are 1 where n is the number of keys in the node that
-        // are lower than the search key.
-        //
-        // Because a node could also have less than 4 keys, we need to make sure that
-        // all keys beyond the bounds of node->num_keys are considered greater than
-        // the search key. i.e. the first n*4 bits have to be 1, where n is
-        // node->num_keys.
-        mask |= 0xffff << (node->num_keys * 4);
-        // count how many keys are smaller than the search key
-        if (mask == 0) {
-            return node->num_keys;
-        } else {
-            return __tzcnt_u16(mask) / 4;
-        }
-#else
         size_t max_bound = node->num_keys;
         size_t min_bound = 0;
         while (max_bound != min_bound) {
@@ -130,7 +62,6 @@ private:
             }
         };
         return max_bound;
-#endif
     }
 
     size_t search_leaf(int32_t key, BPNode** leaf) {
