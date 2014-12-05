@@ -2,7 +2,8 @@
 #define _LOCATIONS_H
 
 #include <cstdint>
-#include <vector>
+#include <fstream>
+#include <string>
 
 #include "bptree.h"
 
@@ -34,8 +35,8 @@ union ModeData {
 };
 
 struct ModeInfo {
-    int (*init_mode)(FILE*, ModeData&);
-    int (*run_input)(BPTree<Location>&, ModeData&, char*);
+    int (*init_mode)(std::ifstream&, ModeData&);
+    int (*run_input)(BPTree<Location>&, ModeData&, std::string&);
     int (*exit_mode)(BPTree<Location>&, ModeData&);
 };
 
@@ -43,6 +44,6 @@ extern ModeInfo adjModeInfo;
 extern ModeInfo niModeInfo;
 extern ModeInfo deltaniModeInfo;
 
-size_t read_locations(FILE* file, BPTree<Location>& output);
+size_t read_locations(std::ifstream& file, BPTree<Location>& output);
 
 #endif

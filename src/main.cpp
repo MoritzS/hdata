@@ -1,10 +1,8 @@
 #include <config.h>
 
-#include <cerrno>
 #include <cstdint>
-#include <cstdio>
-#include <cstdlib>
-#include <ctime>
+#include <fstream>
+#include <iostream>
 #include <string>
 #include <vector>
 
@@ -30,6 +28,8 @@ std::vector<std::string> MODES = {MODE_STR_ADJ, MODE_STR_NI, MODE_STR_DELTANI};
 
 
 int main(int argc, char** argv) {
+    using namespace std;
+
     TCLAP::CmdLine args(PACKAGE_STRING);
     TCLAP::ValuesConstraint<std::string> modeConstraint(MODES);
     TCLAP::UnlabeledValueArg<std::string> modeArg(
@@ -60,7 +60,7 @@ int main(int argc, char** argv) {
 
     args.parse(argc, argv);
 
-    std::string strMode = modeArg.getValue();
+    string strMode = modeArg.getValue();
     Mode mode;
     ModeInfo mode_info;
     if (strMode == MODE_STR_DELTANI) {
@@ -75,34 +75,32 @@ int main(int argc, char** argv) {
     }
 
     if (mode != MODE_ADJ) {
-        fprintf(stderr, "Only \"adj\" mode is implemented!\n");
+        cerr << "Only \"adj\" mode is implemented!" << endl;
         return 1;
     }
 
-    printf("Running in \"%s\" mode\n", strMode.c_str());
+    cout << "Running in \"" << strMode << "\" mode" << endl;
 
-    char const* filename = locsArg.getValue().c_str();
+    ifstream locs_file(locsArg.getValue());
+    if (locs_file.fail()) {
+        cerr << "couldn't read locations file" << endl;
+        return 1;
+    }
     BPTree<Location> locs_tree;
-    FILE* locs_file = fopen(filename, "r");
     size_t num_locs;
-    if (locs_file == nullptr) {
-        perror("couldn't read locations file");
-        return 1;
-    }
-    printf("reading locations... ");
-    fflush(stdout);
+    cout << "reading locations... ";
+    cout.flush();
     num_locs = read_locations(locs_file, locs_tree);
-    fclose(locs_file);
+    locs_file.close();
     if (num_locs == 0) {
-        printf("error\n");
+        cerr << "error" << endl;
         return 1;
     }
-    printf("got %zi\n", num_locs);
+    cout << "got " << num_locs << endl;
 
-    filename = treeArg.getValue().c_str();
-    FILE* tree_file = fopen(filename, "r");
-    if (tree_file == nullptr) {
-        perror("couldn't read tree data file");
+    ifstream tree_file(treeArg.getValue());
+    if (tree_file.fail()) {
+        cerr << "couldn't read tree data file" << endl;
         return 1;
     }
     ModeData mode_data;
@@ -112,18 +110,20 @@ int main(int argc, char** argv) {
             return ret;
         }
     }
+    tree_file.close();
 
     char *line;
     while(1) {
         line = readline("> ");
         if (line == nullptr) {
-            printf("\n");
+            cout << endl;
             break;
         }
-        if (line[0] == 0) {
+        string input(line);
+        if (input.empty()) {
             continue;
         }
-        if (mode_info.run_input(locs_tree, mode_data, line) == 0) {
+        if (mode_info.run_input(locs_tree, mode_data, input) == 0) {
             add_history(line);
         }
     }

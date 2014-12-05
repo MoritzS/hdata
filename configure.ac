@@ -25,7 +25,6 @@ AC_TYPE_SIZE_T
 AC_TYPE_UINT16_T
 
 # Checks for library functions.
-AC_FUNC_MALLOC
 
 AX_EXT
 
