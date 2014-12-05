@@ -71,20 +71,28 @@ ModeInfo adjModeInfo = {
     // run_input
     [] (BPTree<Location>& locs, ModeData& data, std::string& input) {
         using namespace std;
-        uint32_t loc_id;
-        try {
-            loc_id = stou_safe(input);
-        } catch (logic_error& e) {
-            cout << "invalid id" << endl;
-            return 0;
-        }
-        cout << "searching id " << loc_id << ": ";
-        cout.flush();
-        Location loc;
-        if (locs.search((int32_t)loc_id, loc)) {
-            cout << "found \"" << loc.name << '"' << endl;
+        stringstream stream(input);
+        string s;
+        stream >> s;
+        if (s == "search") {
+            uint32_t loc_id;
+            stream >> s;
+            try {
+                loc_id = stou_safe(s);
+            } catch (logic_error& e) {
+                cout << "invalid id" << endl;
+                return 0;
+            }
+            cout << "searching id " << loc_id << ": ";
+            cout.flush();
+            Location loc;
+            if (locs.search((int32_t)loc_id, loc)) {
+                cout << "found \"" << loc.name << '"' << endl;
+            } else {
+                cout << "not found" << endl;
+            }
         } else {
-            cout << "not found" << endl;
+            cout << "unknown command '" << s << "'" << endl;
         }
         return 0;
     },
