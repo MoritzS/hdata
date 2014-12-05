@@ -122,6 +122,8 @@ int main(int argc, char** argv) {
         string input(line);
         if (input.empty()) {
             continue;
+        } else if (input == "q" || input == "quit") {
+            break;
         }
         if (mode_info.run_input(locs_tree, mode_data, input) == 0) {
             add_history(line);
