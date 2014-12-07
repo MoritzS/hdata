@@ -1,6 +1,7 @@
 #include "locations.h"
 
 #include <iostream>
+#include <stack>
 #include <sstream>
 #include <stdexcept>
 
@@ -91,6 +92,57 @@ ModeInfo adjModeInfo = {
             } else {
                 cout << "not found" << endl;
             }
+        } else if (s == "num_childs") {
+            uint32_t parent_id;
+            try {
+                stream >> s;
+                parent_id = stou_safe(s);
+            } catch (logic_error& e) {
+                cout << "invalid id" << endl;
+                return 0;
+            }
+            cout << "number of childs: " << data.adj.edges.count_key(parent_id) << endl;
+        } else if (s == "child_ids") {
+            uint32_t parent_id;
+            try {
+                stream >> s;
+                parent_id = stou_safe(s);
+            } catch (logic_error& e) {
+                cout << "invalid id" << endl;
+                return 0;
+            }
+            cout << "child ids: " << endl;
+            for (AdjacentLocation& edge : data.adj.edges.search_iter(parent_id)) {
+                cout << edge.child_id << endl;
+            }
+        } else if (s == "is_ancestor") {
+            uint32_t parent_id;
+            uint32_t child_id;
+            try {
+                stream >> s;
+                parent_id = stou_safe(s);
+                stream >> s;
+                child_id = stou_safe(s);
+            } catch (logic_error& e) {
+                cout << "invalid ids" << endl;
+                return 0;
+            }
+            stack<uint32_t> search_ids;
+            search_ids.push(parent_id);
+            while (!search_ids.empty()) {
+                uint32_t search_id = search_ids.top();
+                search_ids.pop();
+                for (AdjacentLocation& edge : data.adj.edges.search_iter(search_id)) {
+                    if (edge.child_id == child_id) {
+                        goto is_ancestor;
+                    }
+                    search_ids.push(edge.child_id);
+                }
+            }
+            cout << "id " << parent_id << " is NOT an ancestor of id " << child_id << endl;
+            return 0;
+            is_ancestor:
+            cout << "id " << parent_id << " is an ancestor of id " << child_id << endl;
         } else {
             cout << "unknown command '" << s << "'" << endl;
         }
