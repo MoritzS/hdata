@@ -77,10 +77,7 @@ ModeInfo adjModeInfo = {
         stream >> s;
         if (s == "search") {
             uint32_t loc_id;
-            stream >> s;
-            try {
-                loc_id = stou_safe(s);
-            } catch (logic_error& e) {
+            if (!stream_ui(stream, loc_id)) {
                 cout << "invalid id" << endl;
                 return 0;
             }
@@ -94,20 +91,14 @@ ModeInfo adjModeInfo = {
             }
         } else if (s == "num_childs") {
             uint32_t parent_id;
-            try {
-                stream >> s;
-                parent_id = stou_safe(s);
-            } catch (logic_error& e) {
+            if (!stream_ui(stream, parent_id)) {
                 cout << "invalid id" << endl;
                 return 0;
             }
             cout << "number of childs: " << data.adj.edges.count_key(parent_id) << endl;
         } else if (s == "child_ids") {
             uint32_t parent_id;
-            try {
-                stream >> s;
-                parent_id = stou_safe(s);
-            } catch (logic_error& e) {
+            if (!stream_ui(stream, parent_id)) {
                 cout << "invalid id" << endl;
                 return 0;
             }
@@ -118,12 +109,7 @@ ModeInfo adjModeInfo = {
         } else if (s == "is_ancestor") {
             uint32_t parent_id;
             uint32_t child_id;
-            try {
-                stream >> s;
-                parent_id = stou_safe(s);
-                stream >> s;
-                child_id = stou_safe(s);
-            } catch (logic_error& e) {
+            if (!(stream_ui(stream, parent_id) && stream_ui(stream, child_id))) {
                 cout << "invalid ids" << endl;
                 return 0;
             }

@@ -23,3 +23,14 @@ namespace std {
         return i; 
     }
 }
+
+bool stream_ui(std::istream& stream, uint32_t& out, int base) {
+    std::string s;
+    stream >> s;
+    try {
+        out = stou_safe(s, base);
+        return true;
+    } catch (std::logic_error) {
+        return false;
+    }
+}
