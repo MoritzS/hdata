@@ -1,8 +1,8 @@
 #ifndef BPTREE_H
 #define BPTREE_H
 
-#include <config.h>
 #include <cstdint>
+#include <iterator>
 
 #ifndef BPTREE_MAX_KEYS
     #define BPTREE_MAX_KEYS 8
@@ -35,6 +35,7 @@ private:
         size_t num_keys;
         int32_t keys[BPTREE_MAX_KEYS];
         BPNode* parent;
+        size_t parent_pos;
         union {
             BPInnerNode inner;
             BPLeaf leaf;
@@ -78,10 +79,91 @@ private:
     }
 
 public:
+    class BPKeyIterator
+    : public std::iterator<std::input_iterator_tag, V, size_t> {
+    private:
+        int32_t const key;
+        BPNode const* current_node;
+        size_t current_index;
+
+    public:
+        BPKeyIterator(int32_t key)
+        : key(key), current_node(nullptr) {
+        }
+
+        BPKeyIterator(int32_t key, BPNode* node, size_t index)
+        : key(key), current_node(node), current_index(index) {
+        }
+
+        bool operator ==(BPKeyIterator& it) {
+            if (current_node == nullptr) {
+                return key == it.key;
+            } else {
+                return (key == it.key) &&
+                    (current_node == it.current_node) &&
+                    (current_index == it.current_index);
+            }
+        }
+
+        bool operator !=(BPKeyIterator& it) {
+            return !(*this == it);
+        }
+
+        V& operator *() {
+            return current_node->leaf.leaf_values->values[current_index];
+        }
+
+        BPKeyIterator& operator ++() {
+            if (current_node != nullptr) {
+                if (current_index == 0) {
+                    current_node = current_node->leaf.prev;
+                    if (current_node == nullptr) {
+                        return *this;
+                    }
+                    current_index = current_node->num_keys - 1;
+                } else {
+                    current_index--;
+                }
+                if (current_node->keys[current_index] != key) {
+                    current_node = nullptr;
+                }
+            }
+            return *this;
+        }
+    };
+
+    class BPKeyValues {
+    private:
+        int32_t const key;
+        BPNode* const node;
+        size_t const index;
+
+    public:
+        BPKeyValues(int32_t key)
+        : key(key), node(nullptr), index(0) {
+        }
+
+        BPKeyValues(int32_t key, BPNode* node, size_t index)
+        : key(key), node(node), index(index) {
+        }
+        BPKeyIterator begin() {
+            if (node == nullptr) {
+                return end();
+            } else {
+                return BPKeyIterator(key, node, index);
+            }
+        }
+
+        BPKeyIterator end() {
+            return BPKeyIterator(key);
+        }
+    };
+
     BPTree() {
         root_node = alloc_leaf();
         root_node->num_keys = 0;
         root_node->parent = nullptr;
+        root_node->parent_pos = 0;
         root_node->leaf.prev = nullptr;
         root_node->leaf.next = nullptr;
     }
@@ -102,6 +184,24 @@ public:
                 return is_key;
             }
         }
+    }
+
+    BPKeyValues search_iter(int32_t key) {
+        if (root_node->num_keys > 0) {
+            BPNode* leaf;
+            size_t index = search_leaf(key, &leaf) - 1;
+            if (index < leaf->num_keys) {
+                if (key == leaf->keys[index]) {
+                    return BPKeyValues(key, leaf, index);
+                }
+            }
+        }
+        return BPKeyValues(key);
+    }
+
+    size_t count_key(int32_t key) {
+        BPKeyValues v = search_iter(key);
+        return std::distance(std::begin(v), std::end(v));
     }
 
     void insert(int32_t key, V& value) {
@@ -151,9 +251,13 @@ public:
                 new_node->leaf.prev = node;
                 new_node->leaf.next = node->leaf.next;
                 node->num_keys = BPTREE_MAX_KEYS / 2 + 1;
+                if (node->leaf.next != nullptr) {
+                    node->leaf.next->leaf.prev = new_node;
+                }
                 node->leaf.next = new_node;
                 BPNode* right_pointer = new_node;
                 int32_t insert_key = new_node->keys[0];
+                size_t insert_pos = node->parent_pos;
                 node = node->parent;
                 while (right_pointer != nullptr) {
                     if (node == nullptr) {
@@ -161,61 +265,72 @@ public:
                         BPNode* new_root = new BPNode();
                         new_root->type = BP_INNER;
                         new_root->parent = nullptr;
+                        new_root->parent_pos = 0;
                         new_root->num_keys = 1;
                         new_root->keys[0] = insert_key;
                         new_root->inner.pointers[0] = root_node;
                         new_root->inner.pointers[1] = right_pointer;
                         root_node->parent = new_root;
                         right_pointer->parent = new_root;
+                        right_pointer->parent_pos = 1;
                         root_node = new_root;
                         right_pointer = nullptr;
                     } else if (node->num_keys < BPTREE_MAX_KEYS) {
                         // just insert key and pointer in inner node
-                        size_t index = search_in_node(node, insert_key);
-                        for (size_t i = node->num_keys; i > index; i--) {
+                        for (size_t i = node->num_keys; i > insert_pos; i--) {
                             node->keys[i] = node->keys[i-1];
-                            node->inner.pointers[i+1] = node->inner.pointers[i];
+                            BPNode* moved_node = node->inner.pointers[i];
+                            moved_node->parent_pos++;
+                            node->inner.pointers[i+1] = moved_node;
                         }
-                        node->keys[index] = insert_key;
-                        node->inner.pointers[index+1] = right_pointer;
+                        node->keys[insert_pos] = insert_key;
+                        node->inner.pointers[insert_pos+1] = right_pointer;
                         node->num_keys++;
+                        right_pointer->parent_pos = insert_pos + 1;
                         right_pointer = nullptr;
                     } else {
                         // insert key and pointer in inner node and let the
                         // middle element be propagated
-                        index = search_in_node(node, insert_key);
                         BPNode* last_pointer;
-                        if (index >= BPTREE_MAX_KEYS) {
+                        if (insert_pos >= BPTREE_MAX_KEYS) {
                             last_key = insert_key;
                             last_pointer = right_pointer;
                         } else {
                             last_key = node->keys[BPTREE_MAX_KEYS - 1];
                             last_pointer = node->inner.pointers[BPTREE_MAX_KEYS];
-                            for (size_t i = BPTREE_MAX_KEYS - 1; i > index; i--) {
+                            for (size_t i = BPTREE_MAX_KEYS - 1; i > insert_pos; i--) {
                                 node->keys[i] = node->keys[i-1];
-                                node->inner.pointers[i+1] = node->inner.pointers[i];
+                                BPNode* moved_node = node->inner.pointers[i];
+                                moved_node->parent_pos++;
+                                node->inner.pointers[i+1] = moved_node;
                             }
-                            node->keys[index] = insert_key;
-                            node->inner.pointers[index+1] = right_pointer;
+                            node->keys[insert_pos] = insert_key;
+                            right_pointer->parent_pos = insert_pos + 1;
+                            node->inner.pointers[insert_pos+1] = right_pointer;
                         }
                         new_node = new BPNode();
                         new_node->type = BP_INNER;
                         new_node->parent = node->parent;
                         new_node->inner.pointers[0] = node->inner.pointers[BPTREE_MAX_KEYS / 2 + 1];
                         new_node->inner.pointers[0]->parent = new_node;
+                        new_node->inner.pointers[0]->parent_pos = 0;
                         for (size_t i = BPTREE_MAX_KEYS / 2 + 1; i < BPTREE_MAX_KEYS; i++) {
                             new_node->keys[i - BPTREE_MAX_KEYS / 2 - 1] = node->keys[i];
                             BPNode* moved_node = node->inner.pointers[i+1];
                             moved_node->parent = new_node;
-                            new_node->inner.pointers[i - BPTREE_MAX_KEYS / 2] = moved_node;
+                            size_t j = i - BPTREE_MAX_KEYS / 2;
+                            moved_node->parent_pos = j;
+                            new_node->inner.pointers[j] = moved_node;
                         }
                         new_node->keys[BPTREE_MAX_KEYS / 2 - 1] = last_key;
                         new_node->inner.pointers[BPTREE_MAX_KEYS / 2] = last_pointer;
                         last_pointer->parent = new_node;
+                        last_pointer->parent_pos = BPTREE_MAX_KEYS / 2;
                         new_node->num_keys = BPTREE_MAX_KEYS / 2;
                         node->num_keys = BPTREE_MAX_KEYS / 2;
                         insert_key = node->keys[BPTREE_MAX_KEYS / 2];
                         right_pointer = new_node;
+                        insert_pos = node->parent_pos;
                         node = node->parent;
                     }
                 }
