@@ -223,6 +223,23 @@ ModeInfo niModeInfo = {
                 }
             }
             cout << "done" << endl;
+        } else if (s == "is_ancestor") {
+            uint32_t parent_id;
+            uint32_t child_id;
+            if (!(stream_ui(stream, parent_id) && stream_ui(stream, child_id))) {
+                cout << "invalid ids" << endl;
+                return 0;
+            }
+            NIEdge parent_ni;
+            NIEdge child_ni;
+            if (data.ni.edges.search(parent_id, parent_ni) &&
+                data.ni.edges.search(child_id, child_ni)) {
+                if (parent_ni.lower < child_ni.lower && parent_ni.upper > child_ni.upper) {
+                    cout << "id " << parent_id << " is an ancestor of id " << child_id << endl;
+                    return 0;
+                }
+            }
+            cout << "id " << parent_id << " is NOT an ancestor of id " << child_id << endl;
         } else {
             cout << "unknown command '" << s << "'" << endl;
         }
