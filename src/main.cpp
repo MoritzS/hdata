@@ -74,8 +74,8 @@ int main(int argc, char** argv) {
         mode_info = adjModeInfo;
     }
 
-    if (mode != MODE_ADJ) {
-        cerr << "Only \"adj\" mode is implemented!" << endl;
+    if (!(mode == MODE_ADJ || mode == MODE_NI)) {
+        cerr << "Only \"adj\" and \"ni\" modes are implemented!" << endl;
         return 1;
     }
 

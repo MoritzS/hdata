@@ -17,11 +17,18 @@ struct AdjacentLocation {
     uint32_t child_id;
 };
 
+struct NIEdge {
+    uint32_t loc_id;
+    uint32_t lower;
+    uint32_t upper;
+};
+
 struct AdjModeData {
     BPTree<AdjacentLocation> edges;
 };
 
 struct NiModeData {
+    BPTree<NIEdge> edges;
 };
 
 struct DeltaniModeData{

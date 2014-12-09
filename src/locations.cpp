@@ -1,6 +1,7 @@
 #include "locations.h"
 
 #include <iostream>
+#include <map>
 #include <stack>
 #include <sstream>
 #include <stdexcept>
@@ -138,8 +139,95 @@ ModeInfo adjModeInfo = {
 };
 
 ModeInfo niModeInfo = {
-    nullptr,
-    nullptr,
+    // init_mode
+    [] (std::ifstream& file, ModeData& data) {
+        using namespace std;
+        cout << "reading ni edges... ";
+        cout.flush();
+        size_t edges_read = 0;
+        data.ni.edges = BPTree<NIEdge>();
+        BPTree<NIEdge>& edges = data.ni.edges;
+        while (1) {
+            string line;
+            getline(file, line);
+            if (file.eof()) {
+                break;
+            }
+            NIEdge edge;
+            stringstream line_stream(line);
+            try {
+                string s;
+                getline(line_stream, s, '|');
+                edge.loc_id = stou_safe(s);
+                getline(line_stream, s, '|');
+                edge.lower = stou_safe(s);
+                getline(line_stream, s, '|');
+                edge.upper = stou_safe(s);
+            } catch (logic_error& e) {
+                continue;
+            }
+            edges.insert((int32_t)edge.loc_id, edge);
+            edges_read++;
+        }
+        cout << "got " << edges_read << endl;
+        return 0;
+    },
+    // run_input
+    [] (BPTree<Location>& locs, ModeData& data, std::string& input) {
+        using namespace std;
+        stringstream stream(input);
+        string s;
+        stream >> s;
+        if (s == "convert_adj") {
+            uint32_t root_id;
+            if (!(stream_ui(stream, root_id))) {
+                cout << "invalid root id" << endl;
+                return 0;
+            }
+            string filename_from;
+            string filename_to;
+            stream >> filename_from >> filename_to;
+            ifstream from_file(filename_from);
+            if (from_file.fail()) {
+                cout << "couldn't read input file" << endl;
+                return 0;
+            }
+            ofstream to_file(filename_to);
+            if (to_file.fail()) {
+                cout << "couldn't read output file" << endl;
+                return 0;
+            }
+            ModeData adj_data;
+            adjModeInfo.init_mode(from_file, adj_data);
+            uint32_t dfs_num = 1;
+            stack<uint32_t> search_ids;
+            map<uint32_t, uint32_t> start_nums;
+            search_ids.push(root_id);
+            cout << "generating ni data... ";
+            cout.flush();
+            while (!search_ids.empty()) {
+                uint32_t search_id = search_ids.top();
+                map<uint32_t, uint32_t>::iterator it = start_nums.find(search_id);
+                if (it != start_nums.end()) {
+                    to_file << search_id << '|' << it->second << '|' << dfs_num << endl;
+                    dfs_num++;
+                    search_ids.pop();
+                    start_nums.erase(it);
+                    continue;
+                } else {
+                    start_nums.insert(pair<uint32_t, uint32_t>(search_id, dfs_num));
+                    dfs_num++;
+                }
+                for (AdjacentLocation& edge : adj_data.adj.edges.search_iter(search_id)) {
+                    search_ids.push(edge.child_id);
+                }
+            }
+            cout << "done" << endl;
+        } else {
+            cout << "unknown command '" << s << "'" << endl;
+        }
+        return 0;
+    },
     nullptr
 };
 
