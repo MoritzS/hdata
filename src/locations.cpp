@@ -44,7 +44,8 @@ ModeInfo adjModeInfo = {
         cout << "reading edges... ";
         cout.flush();
         size_t edges_read = 0;
-        BPTree<AdjacentLocation> edges;
+        data.adj.edges = BPTree<AdjacentLocation>();
+        BPTree<AdjacentLocation>& edges = data.adj.edges;
         while (1) {
             string line;
             getline(file, line);
@@ -65,7 +66,6 @@ ModeInfo adjModeInfo = {
             edges.insert((int32_t)edge.parent_id, edge);
             edges_read++;
         }
-        data.adj.edges = edges;
         cout << "got " << edges_read << endl;
         return 0;
     },
