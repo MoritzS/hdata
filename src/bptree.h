@@ -159,6 +159,86 @@ public:
         }
     };
 
+    class BPRangeIterator
+    : public std::iterator<std::bidirectional_iterator_tag, V, size_t> {
+    private:
+        BPNode* node;
+        size_t index;
+    public:
+        BPRangeIterator()
+        : node(nullptr), index(0) {
+        }
+
+        BPRangeIterator(BPNode* node, size_t index)
+        : node(node), index(index) {
+        }
+
+        bool operator ==(BPRangeIterator& it) {
+            if (node == nullptr) {
+                return it.node == nullptr;
+            } else {
+                return (node == it.node) && (index == it.index);
+            }
+        }
+
+        bool operator !=(BPRangeIterator& it) {
+            return !(*this == it);
+        }
+
+        V& operator *() {
+            return node->leaf.leaf_values->values[index];
+        }
+
+        BPRangeIterator& operator ++() {
+            if (node != nullptr) {
+                index++;
+                if (index >= node->num_keys) {
+                    node = node->leaf.next;
+                    index = 0;
+                }
+            }
+            return *this;
+        }
+
+        BPRangeIterator& operator --() {
+            if (node != nullptr) {
+                if (index == 0) {
+                    node = node->leaf.prev;
+                    index = node->num_keys - 1;
+                } else {
+                    index--;
+                }
+            }
+            return *this;
+        }
+    };
+
+    class BPKeyRange {
+    private:
+        BPNode* const node;
+        size_t const index;
+    public:
+        BPKeyRange()
+        : node(nullptr), index(0) {
+        }
+
+        BPKeyRange(BPNode* node, size_t index)
+        : node(node), index(index) {
+        }
+
+        BPRangeIterator begin() {
+            if (node == nullptr) {
+                return end();
+            } else {
+                return BPRangeIterator(node, index);
+            }
+        }
+
+        BPRangeIterator end() {
+            return BPRangeIterator();
+        }
+    };
+
     BPTree() {
         root_node = alloc_leaf();
         root_node->num_keys = 0;
@@ -197,6 +277,23 @@ public:
             }
         }
         return BPKeyValues(key);
+    }
+
+    BPKeyRange search_range(int32_t key) {
+        if (root_node->num_keys > 0) {
+            BPNode* leaf;
+            size_t index = search_leaf(key, &leaf);
+            if (index == 0) {
+                if (leaf->leaf.prev == nullptr) {
+                    return BPKeyRange(leaf, 0);
+                } else {
+                    return BPKeyRange(leaf->leaf.prev, leaf->leaf.prev->num_keys - 1);
+                }
+            } else {
+                return BPKeyRange(leaf, index - 1);
+            }
+        }
+        return BPKeyRange();
     }
 
     size_t count_key(int32_t key) {
