@@ -4,12 +4,7 @@
 #include <cstdint>
 #include <iterator>
 
-#ifndef BPTREE_MAX_KEYS
-    #define BPTREE_MAX_KEYS 8
-#endif
-
-
-template <class V>
+template <class V, size_t BPTREE_MAX_KEYS = 8>
 class BPTree {
 private:
     enum BPNodeType {BP_INNER, BP_LEAF};
