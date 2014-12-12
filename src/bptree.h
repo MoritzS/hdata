@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <iterator>
+#include <stack>
 
 template <class V, size_t BPTREE_MAX_KEYS = 8>
 class BPTree {
@@ -241,6 +242,23 @@ public:
         root_node->parent_pos = 0;
         root_node->leaf.prev = nullptr;
         root_node->leaf.next = nullptr;
+    }
+
+    ~BPTree() {
+        std::stack<BPNode*> nodes;
+        nodes.push(root_node);
+        while (!nodes.empty()) {
+            BPNode* node = nodes.top();
+            nodes.pop();
+            if (node->type == BP_LEAF) {
+                delete node->leaf.leaf_values;
+            } else {
+                for (size_t i=0; i <= node->num_keys; i++) {
+                    nodes.push(node->inner.pointers[i]);
+                }
+            }
+            delete node;
+        }
     }
 
     bool search(int32_t key, V& data) {
