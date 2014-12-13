@@ -36,15 +36,15 @@ struct DeltaniModeData{
 
 union ModeData {
     ModeData() {}
-    AdjModeData adj;
-    NiModeData ni;
-    DeltaniModeData deltani;
+    AdjModeData* adj;
+    NiModeData* ni;
+    DeltaniModeData* deltani;
 };
 
 struct ModeInfo {
     int (*init_mode)(std::ifstream&, ModeData&);
     int (*run_input)(BPTree<Location>&, ModeData&, std::string&);
-    int (*exit_mode)(BPTree<Location>&, ModeData&);
+    int (*exit_mode)(ModeData&);
 };
 
 extern ModeInfo adjModeInfo;

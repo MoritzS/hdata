@@ -42,11 +42,11 @@ ModeInfo adjModeInfo = {
     // init_mode
     [] (std::ifstream& file, ModeData& data) {
         using namespace std;
+        data.adj = new AdjModeData();
         cout << "reading edges... ";
         cout.flush();
         size_t edges_read = 0;
-        data.adj.edges = BPTree<AdjacentLocation>();
-        BPTree<AdjacentLocation>& edges = data.adj.edges;
+        BPTree<AdjacentLocation>& edges = data.adj->edges;
         while (1) {
             string line;
             getline(file, line);
@@ -96,7 +96,7 @@ ModeInfo adjModeInfo = {
                 cout << "invalid id" << endl;
                 return 0;
             }
-            cout << "number of childs: " << data.adj.edges.count_key(parent_id) << endl;
+            cout << "number of childs: " << data.adj->edges.count_key(parent_id) << endl;
         } else if (s == "child_ids") {
             uint32_t parent_id;
             if (!stream_ui(stream, parent_id)) {
@@ -104,7 +104,7 @@ ModeInfo adjModeInfo = {
                 return 0;
             }
             cout << "child ids: " << endl;
-            for (AdjacentLocation& edge : data.adj.edges.search_iter(parent_id)) {
+            for (AdjacentLocation& edge : data.adj->edges.search_iter(parent_id)) {
                 cout << edge.child_id << endl;
             }
         } else if (s == "is_ancestor") {
@@ -119,7 +119,7 @@ ModeInfo adjModeInfo = {
             while (!search_ids.empty()) {
                 uint32_t search_id = search_ids.top();
                 search_ids.pop();
-                for (AdjacentLocation& edge : data.adj.edges.search_iter(search_id)) {
+                for (AdjacentLocation& edge : data.adj->edges.search_iter(search_id)) {
                     if (edge.child_id == child_id) {
                         goto is_ancestor;
                     }
@@ -135,18 +135,22 @@ ModeInfo adjModeInfo = {
         }
         return 0;
     },
-    nullptr
+    // exit_mode
+    [] (ModeData& data) {
+        delete data.adj;
+        return 0;
+    }
 };
 
 ModeInfo niModeInfo = {
     // init_mode
     [] (std::ifstream& file, ModeData& data) {
         using namespace std;
+        data.ni = new NiModeData();
         cout << "reading ni edges... ";
         cout.flush();
         size_t edges_read = 0;
-        data.ni.edges = BPTree<NIEdge>();
-        BPTree<NIEdge>& edges = data.ni.edges;
+        BPTree<NIEdge>& edges = data.ni->edges;
         while (1) {
             string line;
             getline(file, line);
@@ -218,10 +222,11 @@ ModeInfo niModeInfo = {
                     start_nums.insert(pair<uint32_t, uint32_t>(search_id, dfs_num));
                     dfs_num++;
                 }
-                for (AdjacentLocation& edge : adj_data.adj.edges.search_iter(search_id)) {
+                for (AdjacentLocation& edge : adj_data.adj->edges.search_iter(search_id)) {
                     search_ids.push(edge.child_id);
                 }
             }
+            adjModeInfo.exit_mode(adj_data);
             cout << "done" << endl;
         } else if (s == "is_ancestor") {
             uint32_t parent_id;
@@ -232,8 +237,8 @@ ModeInfo niModeInfo = {
             }
             NIEdge parent_ni;
             NIEdge child_ni;
-            if (data.ni.edges.search(parent_id, parent_ni) &&
-                data.ni.edges.search(child_id, child_ni)) {
+            if (data.ni->edges.search(parent_id, parent_ni) &&
+                data.ni->edges.search(child_id, child_ni)) {
                 if (parent_ni.lower < child_ni.lower && parent_ni.upper > child_ni.upper) {
                     cout << "id " << parent_id << " is an ancestor of id " << child_id << endl;
                     return 0;
@@ -245,7 +250,11 @@ ModeInfo niModeInfo = {
         }
         return 0;
     },
-    nullptr
+    // exit_mode
+    [] (ModeData& data) {
+        delete data.ni;
+        return 0;
+    }
 };
 
 ModeInfo deltaniModeInfo = {

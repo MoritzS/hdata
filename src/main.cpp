@@ -130,7 +130,7 @@ int main(int argc, char** argv) {
         }
     }
     if (mode_info.exit_mode != nullptr) {
-        int ret = mode_info.exit_mode(locs_tree, mode_data);
+        int ret = mode_info.exit_mode(mode_data);
         if (ret != 0) {
             return ret;
         }
