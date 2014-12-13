@@ -5,7 +5,7 @@
 #include <iterator>
 #include <stack>
 
-template <class V, class KeyType = int32_t, size_t BPTREE_MAX_KEYS = 8>
+template <class V, class KeyType = int32_t, size_t MAX_KEYS = 8>
 class BPTree {
 private:
     enum BPNodeType {BP_INNER, BP_LEAF};
@@ -13,11 +13,11 @@ private:
     struct BPNode;
 
     struct BPInnerNode {
-        BPNode* pointers[BPTREE_MAX_KEYS+1];
+        BPNode* pointers[MAX_KEYS+1];
     };
 
     struct BPLeafValues {
-        V values[BPTREE_MAX_KEYS];
+        V values[MAX_KEYS];
     };
 
     struct BPLeaf {
@@ -29,7 +29,7 @@ private:
     struct BPNode {
         BPNodeType type;
         size_t num_keys;
-        KeyType keys[BPTREE_MAX_KEYS];
+        KeyType keys[MAX_KEYS];
         BPNode* parent;
         size_t parent_pos;
         union {
@@ -322,7 +322,7 @@ public:
         } else {
             BPNode* node;
             size_t index = search_leaf(key, &node);
-            if (node->num_keys < BPTREE_MAX_KEYS) {
+            if (node->num_keys < MAX_KEYS) {
                 // move all keys and values one to the right
                 // to be able to insert the new key
                 for (size_t i = node->num_keys; i > index; i--) {
@@ -335,13 +335,13 @@ public:
             } else {
                 KeyType last_key;
                 V last_value;
-                if (index >= BPTREE_MAX_KEYS) {
+                if (index >= MAX_KEYS) {
                     last_key = key;
                     last_value = value;
                 } else {
-                    last_key = node->keys[BPTREE_MAX_KEYS - 1];
-                    last_value = node->leaf.leaf_values->values[BPTREE_MAX_KEYS - 1];
-                    for (size_t i = BPTREE_MAX_KEYS - 1; i > index; i--) {
+                    last_key = node->keys[MAX_KEYS - 1];
+                    last_value = node->leaf.leaf_values->values[MAX_KEYS - 1];
+                    for (size_t i = MAX_KEYS - 1; i > index; i--) {
                         node->keys[i] = node->keys[i-1];
                         node->leaf.leaf_values->values[i] = node->leaf.leaf_values->values[i-1];
                     }
@@ -350,17 +350,17 @@ public:
                 }
                 BPNode* new_node = alloc_leaf();
                 new_node->parent = node->parent;
-                for (size_t i = BPTREE_MAX_KEYS / 2 + 1; i < BPTREE_MAX_KEYS; i++) {
-                    size_t j = i - BPTREE_MAX_KEYS / 2 - 1;
+                for (size_t i = MAX_KEYS / 2 + 1; i < MAX_KEYS; i++) {
+                    size_t j = i - MAX_KEYS / 2 - 1;
                     new_node->keys[j] = node->keys[i];
                     new_node->leaf.leaf_values->values[j] = node->leaf.leaf_values->values[i];
                 }
-                new_node->keys[BPTREE_MAX_KEYS / 2 - 1] = last_key;
-                new_node->leaf.leaf_values->values[BPTREE_MAX_KEYS / 2 - 1] = last_value;
-                new_node->num_keys = BPTREE_MAX_KEYS / 2;
+                new_node->keys[MAX_KEYS / 2 - 1] = last_key;
+                new_node->leaf.leaf_values->values[MAX_KEYS / 2 - 1] = last_value;
+                new_node->num_keys = MAX_KEYS / 2;
                 new_node->leaf.prev = node;
                 new_node->leaf.next = node->leaf.next;
-                node->num_keys = BPTREE_MAX_KEYS / 2 + 1;
+                node->num_keys = MAX_KEYS / 2 + 1;
                 if (node->leaf.next != nullptr) {
                     node->leaf.next->leaf.prev = new_node;
                 }
@@ -385,7 +385,7 @@ public:
                         right_pointer->parent_pos = 1;
                         root_node = new_root;
                         right_pointer = nullptr;
-                    } else if (node->num_keys < BPTREE_MAX_KEYS) {
+                    } else if (node->num_keys < MAX_KEYS) {
                         // just insert key and pointer in inner node
                         for (size_t i = node->num_keys; i > insert_pos; i--) {
                             node->keys[i] = node->keys[i-1];
@@ -402,13 +402,13 @@ public:
                         // insert key and pointer in inner node and let the
                         // middle element be propagated
                         BPNode* last_pointer;
-                        if (insert_pos >= BPTREE_MAX_KEYS) {
+                        if (insert_pos >= MAX_KEYS) {
                             last_key = insert_key;
                             last_pointer = right_pointer;
                         } else {
-                            last_key = node->keys[BPTREE_MAX_KEYS - 1];
-                            last_pointer = node->inner.pointers[BPTREE_MAX_KEYS];
-                            for (size_t i = BPTREE_MAX_KEYS - 1; i > insert_pos; i--) {
+                            last_key = node->keys[MAX_KEYS - 1];
+                            last_pointer = node->inner.pointers[MAX_KEYS];
+                            for (size_t i = MAX_KEYS - 1; i > insert_pos; i--) {
                                 node->keys[i] = node->keys[i-1];
                                 BPNode* moved_node = node->inner.pointers[i];
                                 moved_node->parent_pos++;
@@ -421,24 +421,24 @@ public:
                         new_node = new BPNode();
                         new_node->type = BP_INNER;
                         new_node->parent = node->parent;
-                        new_node->inner.pointers[0] = node->inner.pointers[BPTREE_MAX_KEYS / 2 + 1];
+                        new_node->inner.pointers[0] = node->inner.pointers[MAX_KEYS / 2 + 1];
                         new_node->inner.pointers[0]->parent = new_node;
                         new_node->inner.pointers[0]->parent_pos = 0;
-                        for (size_t i = BPTREE_MAX_KEYS / 2 + 1; i < BPTREE_MAX_KEYS; i++) {
-                            new_node->keys[i - BPTREE_MAX_KEYS / 2 - 1] = node->keys[i];
+                        for (size_t i = MAX_KEYS / 2 + 1; i < MAX_KEYS; i++) {
+                            new_node->keys[i - MAX_KEYS / 2 - 1] = node->keys[i];
                             BPNode* moved_node = node->inner.pointers[i+1];
                             moved_node->parent = new_node;
-                            size_t j = i - BPTREE_MAX_KEYS / 2;
+                            size_t j = i - MAX_KEYS / 2;
                             moved_node->parent_pos = j;
                             new_node->inner.pointers[j] = moved_node;
                         }
-                        new_node->keys[BPTREE_MAX_KEYS / 2 - 1] = last_key;
-                        new_node->inner.pointers[BPTREE_MAX_KEYS / 2] = last_pointer;
+                        new_node->keys[MAX_KEYS / 2 - 1] = last_key;
+                        new_node->inner.pointers[MAX_KEYS / 2] = last_pointer;
                         last_pointer->parent = new_node;
-                        last_pointer->parent_pos = BPTREE_MAX_KEYS / 2;
-                        new_node->num_keys = BPTREE_MAX_KEYS / 2;
-                        node->num_keys = BPTREE_MAX_KEYS / 2;
-                        insert_key = node->keys[BPTREE_MAX_KEYS / 2];
+                        last_pointer->parent_pos = MAX_KEYS / 2;
+                        new_node->num_keys = MAX_KEYS / 2;
+                        node->num_keys = MAX_KEYS / 2;
+                        insert_key = node->keys[MAX_KEYS / 2];
                         right_pointer = new_node;
                         insert_pos = node->parent_pos;
                         node = node->parent;
