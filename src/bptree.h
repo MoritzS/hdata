@@ -5,7 +5,7 @@
 #include <iterator>
 #include <stack>
 
-template <class V, size_t BPTREE_MAX_KEYS = 8>
+template <class V, class KeyType = int32_t, size_t BPTREE_MAX_KEYS = 8>
 class BPTree {
 private:
     enum BPNodeType {BP_INNER, BP_LEAF};
@@ -29,7 +29,7 @@ private:
     struct BPNode {
         BPNodeType type;
         size_t num_keys;
-        int32_t keys[BPTREE_MAX_KEYS];
+        KeyType keys[BPTREE_MAX_KEYS];
         BPNode* parent;
         size_t parent_pos;
         union {
@@ -47,7 +47,7 @@ private:
         return node;
     }
 
-    static size_t search_in_node(BPNode* node, int32_t key) {
+    static size_t search_in_node(BPNode* node, KeyType key) {
         size_t max_bound = node->num_keys;
         size_t min_bound = 0;
         while (max_bound != min_bound) {
@@ -61,7 +61,7 @@ private:
         return max_bound;
     }
 
-    size_t search_leaf(int32_t key, BPNode** leaf) {
+    size_t search_leaf(KeyType key, BPNode** leaf) {
         BPNode* node = root_node;
         while (true) {
             size_t index = search_in_node(node, key);
@@ -78,16 +78,16 @@ public:
     class BPKeyIterator
     : public std::iterator<std::input_iterator_tag, V, size_t> {
     private:
-        int32_t const key;
+        KeyType const key;
         BPNode const* current_node;
         size_t current_index;
 
     public:
-        BPKeyIterator(int32_t key)
+        BPKeyIterator(KeyType key)
         : key(key), current_node(nullptr) {
         }
 
-        BPKeyIterator(int32_t key, BPNode* node, size_t index)
+        BPKeyIterator(KeyType key, BPNode* node, size_t index)
         : key(key), current_node(node), current_index(index) {
         }
 
@@ -130,16 +130,16 @@ public:
 
     class BPKeyValues {
     private:
-        int32_t const key;
+        KeyType const key;
         BPNode* const node;
         size_t const index;
 
     public:
-        BPKeyValues(int32_t key)
+        BPKeyValues(KeyType key)
         : key(key), node(nullptr), index(0) {
         }
 
-        BPKeyValues(int32_t key, BPNode* node, size_t index)
+        BPKeyValues(KeyType key, BPNode* node, size_t index)
         : key(key), node(node), index(index) {
         }
         BPKeyIterator begin() {
@@ -261,7 +261,7 @@ public:
         }
     }
 
-    bool search(int32_t key, V& data) {
+    bool search(KeyType key, V& data) {
         if (root_node->num_keys == 0) {
             return false;
         } else {
@@ -279,7 +279,7 @@ public:
         }
     }
 
-    BPKeyValues search_iter(int32_t key) {
+    BPKeyValues search_iter(KeyType key) {
         if (root_node->num_keys > 0) {
             BPNode* leaf;
             size_t index = search_leaf(key, &leaf) - 1;
@@ -292,7 +292,7 @@ public:
         return BPKeyValues(key);
     }
 
-    BPKeyRange search_range(int32_t key) {
+    BPKeyRange search_range(KeyType key) {
         if (root_node->num_keys > 0) {
             BPNode* leaf;
             size_t index = search_leaf(key, &leaf);
@@ -309,12 +309,12 @@ public:
         return BPKeyRange();
     }
 
-    size_t count_key(int32_t key) {
+    size_t count_key(KeyType key) {
         BPKeyValues v = search_iter(key);
         return std::distance(std::begin(v), std::end(v));
     }
 
-    void insert(int32_t key, V& value) {
+    void insert(KeyType key, V& value) {
         if (root_node->num_keys == 0) {
             root_node->keys[0] = key;
             root_node->leaf.leaf_values->values[0] = V(value);
@@ -333,7 +333,7 @@ public:
                 node->leaf.leaf_values->values[index] = V(value);
                 node->num_keys++;
             } else {
-                int32_t last_key;
+                KeyType last_key;
                 V last_value;
                 if (index >= BPTREE_MAX_KEYS) {
                     last_key = key;
@@ -366,7 +366,7 @@ public:
                 }
                 node->leaf.next = new_node;
                 BPNode* right_pointer = new_node;
-                int32_t insert_key = new_node->keys[0];
+                KeyType insert_key = new_node->keys[0];
                 size_t insert_pos = node->parent_pos;
                 node = node->parent;
                 while (right_pointer != nullptr) {
