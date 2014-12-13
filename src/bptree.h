@@ -2,6 +2,7 @@
 #define BPTREE_H
 
 #include <cstdint>
+#include <cstring>
 #include <iterator>
 #include <stack>
 
@@ -71,6 +72,50 @@ private:
                 *leaf = node;
                 return index;
             }
+        }
+    }
+
+    static void move_keys(BPNode* node, size_t from) {
+        if (from + 1 < MAX_KEYS) {
+            size_t num_moving;
+            if (node->num_keys < MAX_KEYS) {
+                num_moving = node->num_keys - from;
+            } else {
+                num_moving = node->num_keys - from - 1;
+            }
+            memmove(node->keys + from + 1, node->keys + from, sizeof(KeyType) * num_moving);
+        }
+    }
+
+    static void move_values(BPNode* node, size_t from) {
+        if (from + 1 < MAX_KEYS) {
+            size_t num_moving;
+            if (node->num_keys < MAX_KEYS) {
+                num_moving = node->num_keys - from;
+            } else {
+                num_moving = node->num_keys - from - 1;
+            }
+            memmove(
+                node->leaf.leaf_values->values + from + 1,
+                node->leaf.leaf_values->values + from,
+                sizeof(V) * num_moving
+            );
+        }
+    }
+
+    static void move_pointers(BPNode* node, size_t from) {
+        if (from < MAX_KEYS) {
+            size_t num_moving;
+            if (node->num_keys < MAX_KEYS) {
+                num_moving = node->num_keys + 1 - from;
+            } else {
+                num_moving = node->num_keys + 1 - from - 1;
+            }
+            memmove(
+                node->inner.pointers + from + 1,
+                node->inner.pointers + from,
+                sizeof(BPNode*) * num_moving
+            );
         }
     }
 
@@ -323,12 +368,8 @@ public:
             BPNode* node;
             size_t index = search_leaf(key, &node);
             if (node->num_keys < MAX_KEYS) {
-                // move all keys and values one to the right
-                // to be able to insert the new key
-                for (size_t i = node->num_keys; i > index; i--) {
-                    node->keys[i] = node->keys[i-1];
-                    node->leaf.leaf_values->values[i] = node->leaf.leaf_values->values[i-1];
-                }
+                move_keys(node, index);
+                move_values(node, index);
                 node->keys[index] = key;
                 node->leaf.leaf_values->values[index] = V(value);
                 node->num_keys++;
@@ -341,10 +382,8 @@ public:
                 } else {
                     last_key = node->keys[MAX_KEYS - 1];
                     last_value = node->leaf.leaf_values->values[MAX_KEYS - 1];
-                    for (size_t i = MAX_KEYS - 1; i > index; i--) {
-                        node->keys[i] = node->keys[i-1];
-                        node->leaf.leaf_values->values[i] = node->leaf.leaf_values->values[i-1];
-                    }
+                    move_keys(node, index);
+                    move_values(node, index);
                     node->keys[index] = key;
                     node->leaf.leaf_values->values[index] = V(value);
                 }
@@ -387,12 +426,11 @@ public:
                         right_pointer = nullptr;
                     } else if (node->num_keys < MAX_KEYS) {
                         // just insert key and pointer in inner node
-                        for (size_t i = node->num_keys; i > insert_pos; i--) {
-                            node->keys[i] = node->keys[i-1];
-                            BPNode* moved_node = node->inner.pointers[i];
-                            moved_node->parent_pos++;
-                            node->inner.pointers[i+1] = moved_node;
+                        for (size_t i = insert_pos; i < node->num_keys; i++) {
+                            node->inner.pointers[i + 1]->parent_pos++;
                         }
+                        move_keys(node, insert_pos);
+                        move_pointers(node, insert_pos + 1);
                         node->keys[insert_pos] = insert_key;
                         node->inner.pointers[insert_pos+1] = right_pointer;
                         node->num_keys++;
@@ -408,12 +446,11 @@ public:
                         } else {
                             last_key = node->keys[MAX_KEYS - 1];
                             last_pointer = node->inner.pointers[MAX_KEYS];
-                            for (size_t i = MAX_KEYS - 1; i > insert_pos; i--) {
-                                node->keys[i] = node->keys[i-1];
-                                BPNode* moved_node = node->inner.pointers[i];
-                                moved_node->parent_pos++;
-                                node->inner.pointers[i+1] = moved_node;
+                            for (size_t i = insert_pos; i < node->num_keys; i++) {
+                                node->inner.pointers[i + 1]->parent_pos++;
                             }
+                            move_keys(node, insert_pos);
+                            move_pointers(node, insert_pos + 1);
                             node->keys[insert_pos] = insert_key;
                             right_pointer->parent_pos = insert_pos + 1;
                             node->inner.pointers[insert_pos+1] = right_pointer;
