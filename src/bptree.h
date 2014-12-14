@@ -6,7 +6,7 @@
 #include <iterator>
 #include <stack>
 
-template <class V, class KeyType = int32_t, size_t MAX_KEYS = 8>
+template <class ValueType, class KeyType = int32_t, size_t MAX_KEYS = 8>
 class BPTree {
 private:
     enum BPNodeType {BP_INNER, BP_LEAF};
@@ -18,7 +18,7 @@ private:
     };
 
     struct BPLeafValues {
-        V values[MAX_KEYS];
+        ValueType values[MAX_KEYS];
     };
 
     struct BPLeaf {
@@ -98,7 +98,7 @@ private:
             memmove(
                 node->leaf.leaf_values->values + from + 1,
                 node->leaf.leaf_values->values + from,
-                sizeof(V) * num_moving
+                sizeof(ValueType) * num_moving
             );
         }
     }
@@ -121,7 +121,7 @@ private:
 
 public:
     class BPKeyIterator
-    : public std::iterator<std::input_iterator_tag, V, size_t> {
+    : public std::iterator<std::input_iterator_tag, ValueType, size_t> {
     private:
         KeyType const key;
         BPNode const* current_node;
@@ -150,7 +150,7 @@ public:
             return !(*this == it);
         }
 
-        V& operator *() {
+        ValueType& operator *() {
             return current_node->leaf.leaf_values->values[current_index];
         }
 
@@ -201,7 +201,7 @@ public:
     };
 
     class BPRangeIterator
-    : public std::iterator<std::bidirectional_iterator_tag, V, size_t> {
+    : public std::iterator<std::bidirectional_iterator_tag, ValueType, size_t> {
     private:
         BPNode* node;
         size_t index;
@@ -226,7 +226,7 @@ public:
             return !(*this == it);
         }
 
-        V& operator *() {
+        ValueType& operator *() {
             return node->leaf.leaf_values->values[index];
         }
 
@@ -306,7 +306,7 @@ public:
         }
     }
 
-    bool search(KeyType key, V& data) {
+    bool search(KeyType key, ValueType& data) {
         if (root_node->num_keys == 0) {
             return false;
         } else {
@@ -359,10 +359,10 @@ public:
         return std::distance(std::begin(v), std::end(v));
     }
 
-    void insert(KeyType key, V& value) {
+    void insert(KeyType key, ValueType& value) {
         if (root_node->num_keys == 0) {
             root_node->keys[0] = key;
-            root_node->leaf.leaf_values->values[0] = V(value);
+            root_node->leaf.leaf_values->values[0] = ValueType(value);
             root_node->num_keys++;
         } else {
             BPNode* node;
@@ -371,11 +371,11 @@ public:
                 move_keys(node, index);
                 move_values(node, index);
                 node->keys[index] = key;
-                node->leaf.leaf_values->values[index] = V(value);
+                node->leaf.leaf_values->values[index] = ValueType(value);
                 node->num_keys++;
             } else {
                 KeyType last_key;
-                V last_value;
+                ValueType last_value;
                 if (index >= MAX_KEYS) {
                     last_key = key;
                     last_value = value;
@@ -385,7 +385,7 @@ public:
                     move_keys(node, index);
                     move_values(node, index);
                     node->keys[index] = key;
-                    node->leaf.leaf_values->values[index] = V(value);
+                    node->leaf.leaf_values->values[index] = ValueType(value);
                 }
                 BPNode* new_node = alloc_leaf();
                 new_node->parent = node->parent;
