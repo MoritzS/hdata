@@ -48,7 +48,7 @@ private:
         return node;
     }
 
-    static size_t search_in_node(BPNode* node, KeyType key) {
+    static size_t search_in_node(BPNode* node, KeyType const key) {
         size_t max_bound = node->num_keys;
         size_t min_bound = 0;
         while (max_bound != min_bound) {
@@ -62,7 +62,7 @@ private:
         return max_bound;
     }
 
-    size_t search_leaf(KeyType key, BPNode** leaf) {
+    size_t search_leaf(KeyType const key, BPNode** leaf) const {
         BPNode* node = root_node;
         while (true) {
             size_t index = search_in_node(node, key);
@@ -75,7 +75,7 @@ private:
         }
     }
 
-    static void move_keys(BPNode* node, size_t from) {
+    static void move_keys(BPNode* node, size_t const from) {
         if (from + 1 < MAX_KEYS) {
             size_t num_moving;
             if (node->num_keys < MAX_KEYS) {
@@ -87,7 +87,7 @@ private:
         }
     }
 
-    static void move_values(BPNode* node, size_t from) {
+    static void move_values(BPNode* node, size_t const from) {
         if (from + 1 < MAX_KEYS) {
             size_t num_moving;
             if (node->num_keys < MAX_KEYS) {
@@ -103,7 +103,7 @@ private:
         }
     }
 
-    static void move_pointers(BPNode* node, size_t from) {
+    static void move_pointers(BPNode* node, size_t const from) {
         if (from < MAX_KEYS) {
             size_t num_moving;
             if (node->num_keys < MAX_KEYS) {
@@ -152,15 +152,15 @@ public:
         size_t current_index;
 
     public:
-        BPKeyIterator(KeyType key)
+        BPKeyIterator(KeyType const key)
         : key(key), current_node(nullptr) {
         }
 
-        BPKeyIterator(KeyType key, BPNode* node, size_t index)
+        BPKeyIterator(KeyType const key, BPNode const* const node, size_t const index)
         : key(key), current_node(node), current_index(index) {
         }
 
-        bool operator ==(BPKeyIterator& it) {
+        bool operator ==(BPKeyIterator const& it) const {
             if (current_node == nullptr) {
                 return key == it.key;
             } else {
@@ -170,11 +170,11 @@ public:
             }
         }
 
-        bool operator !=(BPKeyIterator& it) {
+        bool operator !=(BPKeyIterator const& it) const {
             return !(*this == it);
         }
 
-        ValueType& operator *() {
+        ValueType& operator *() const {
             return current_node->leaf.leaf_values->values[current_index];
         }
 
@@ -200,18 +200,19 @@ public:
     class BPKeyValues {
     private:
         KeyType const key;
-        BPNode* const node;
+        BPNode const* const node;
         size_t const index;
 
     public:
-        BPKeyValues(KeyType key)
+        BPKeyValues(KeyType const key)
         : key(key), node(nullptr), index(0) {
         }
 
-        BPKeyValues(KeyType key, BPNode* node, size_t index)
+        BPKeyValues(KeyType const key, BPNode const* const node, size_t const index)
         : key(key), node(node), index(index) {
         }
-        BPKeyIterator begin() {
+
+        BPKeyIterator begin() const {
             if (node == nullptr) {
                 return end();
             } else {
@@ -219,7 +220,7 @@ public:
             }
         }
 
-        BPKeyIterator end() {
+        BPKeyIterator end() const {
             return BPKeyIterator(key);
         }
     };
@@ -227,18 +228,18 @@ public:
     class BPRangeIterator
     : public std::iterator<std::bidirectional_iterator_tag, ValueType, size_t> {
     private:
-        BPNode* node;
+        BPNode const* node;
         size_t index;
     public:
         BPRangeIterator()
         : node(nullptr), index(0) {
         }
 
-        BPRangeIterator(BPNode* node, size_t index)
+        BPRangeIterator(BPNode const* const node, size_t const index)
         : node(node), index(index) {
         }
 
-        bool operator ==(BPRangeIterator& it) {
+        bool operator ==(BPRangeIterator const& it) const {
             if (node == nullptr) {
                 return it.node == nullptr;
             } else {
@@ -246,11 +247,11 @@ public:
             }
         }
 
-        bool operator !=(BPRangeIterator& it) {
+        bool operator !=(BPRangeIterator const& it) const {
             return !(*this == it);
         }
 
-        ValueType& operator *() {
+        ValueType& operator *() const {
             return node->leaf.leaf_values->values[index];
         }
 
@@ -280,18 +281,18 @@ public:
 
     class BPKeyRange {
     private:
-        BPNode* const node;
+        BPNode const* const node;
         size_t const index;
     public:
         BPKeyRange()
         : node(nullptr), index(0) {
         }
 
-        BPKeyRange(BPNode* node, size_t index)
+        BPKeyRange(BPNode const* const node, size_t const index)
         : node(node), index(index) {
         }
 
-        BPRangeIterator begin() {
+        BPRangeIterator begin() const {
             if (node == nullptr) {
                 return end();
             } else {
@@ -299,7 +300,7 @@ public:
             }
         }
 
-        BPRangeIterator end() {
+        BPRangeIterator end() const {
             return BPRangeIterator();
         }
     };
@@ -330,7 +331,7 @@ public:
         }
     }
 
-    bool search(KeyType key, ValueType& data) {
+    bool search(KeyType const key, ValueType& data) const {
         if (root_node->num_keys == 0) {
             return false;
         } else {
@@ -348,7 +349,7 @@ public:
         }
     }
 
-    BPKeyValues search_iter(KeyType key) {
+    BPKeyValues search_iter(KeyType const key) const {
         if (root_node->num_keys > 0) {
             BPNode* leaf;
             size_t index = search_leaf(key, &leaf) - 1;
@@ -361,7 +362,7 @@ public:
         return BPKeyValues(key);
     }
 
-    BPKeyRange search_range(KeyType key) {
+    BPKeyRange search_range(KeyType const key) const {
         if (root_node->num_keys > 0) {
             BPNode* leaf;
             size_t index = search_leaf(key, &leaf);
@@ -378,12 +379,12 @@ public:
         return BPKeyRange();
     }
 
-    size_t count_key(KeyType key) {
+    size_t count_key(KeyType const key) const {
         BPKeyValues v = search_iter(key);
         return std::distance(std::begin(v), std::end(v));
     }
 
-    void insert(KeyType key, ValueType& value) {
+    void insert(KeyType const key, ValueType const& value) {
         if (root_node->num_keys == 0) {
             root_node->keys[0] = key;
             root_node->leaf.leaf_values->values[0] = ValueType(value);
@@ -501,7 +502,7 @@ public:
         }
     }
 
-    size_t depth() {
+    size_t depth() const {
         size_t d = 1;
         BPNode* node = root_node;
         while (node->type != BP_LEAF) {
