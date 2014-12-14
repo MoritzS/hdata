@@ -119,6 +119,30 @@ private:
         }
     }
 
+    static void copy_keys(BPNode* node, BPNode* new_node) {
+        memcpy(
+            new_node->keys,
+            node->keys + MAX_KEYS / 2 + 1,
+            sizeof(KeyType*) * (MAX_KEYS / 2 - 1)
+        );
+    }
+
+    static void copy_values(BPNode* node, BPNode* new_node) {
+        memcpy(
+            new_node->leaf.leaf_values->values,
+            node->leaf.leaf_values->values + MAX_KEYS / 2 + 1,
+            sizeof(ValueType) * (MAX_KEYS / 2 - 1)
+        );
+    }
+
+    static void copy_pointers(BPNode* node, BPNode* new_node) {
+        memcpy(
+            new_node->inner.pointers + 1,
+            node->inner.pointers + MAX_KEYS / 2 + 2,
+            sizeof(BPNode*) * (MAX_KEYS / 2 - 1)
+        );
+    }
+
 public:
     class BPKeyIterator
     : public std::iterator<std::input_iterator_tag, ValueType, size_t> {
@@ -389,11 +413,8 @@ public:
                 }
                 BPNode* new_node = alloc_leaf();
                 new_node->parent = node->parent;
-                for (size_t i = MAX_KEYS / 2 + 1; i < MAX_KEYS; i++) {
-                    size_t j = i - MAX_KEYS / 2 - 1;
-                    new_node->keys[j] = node->keys[i];
-                    new_node->leaf.leaf_values->values[j] = node->leaf.leaf_values->values[i];
-                }
+                copy_keys(node, new_node);
+                copy_values(node, new_node);
                 new_node->keys[MAX_KEYS / 2 - 1] = last_key;
                 new_node->leaf.leaf_values->values[MAX_KEYS / 2 - 1] = last_value;
                 new_node->num_keys = MAX_KEYS / 2;
@@ -459,21 +480,16 @@ public:
                         new_node->type = BP_INNER;
                         new_node->parent = node->parent;
                         new_node->inner.pointers[0] = node->inner.pointers[MAX_KEYS / 2 + 1];
-                        new_node->inner.pointers[0]->parent = new_node;
-                        new_node->inner.pointers[0]->parent_pos = 0;
-                        for (size_t i = MAX_KEYS / 2 + 1; i < MAX_KEYS; i++) {
-                            new_node->keys[i - MAX_KEYS / 2 - 1] = node->keys[i];
-                            BPNode* moved_node = node->inner.pointers[i+1];
-                            moved_node->parent = new_node;
-                            size_t j = i - MAX_KEYS / 2;
-                            moved_node->parent_pos = j;
-                            new_node->inner.pointers[j] = moved_node;
-                        }
+                        copy_keys(node, new_node);
+                        copy_pointers(node, new_node);
                         new_node->keys[MAX_KEYS / 2 - 1] = last_key;
                         new_node->inner.pointers[MAX_KEYS / 2] = last_pointer;
-                        last_pointer->parent = new_node;
-                        last_pointer->parent_pos = MAX_KEYS / 2;
                         new_node->num_keys = MAX_KEYS / 2;
+                        for (size_t i = 0; i <= MAX_KEYS / 2; i++) {
+                            BPNode* moved_node = new_node->inner.pointers[i];
+                            moved_node->parent = new_node;
+                            moved_node->parent_pos = i;
+                        }
                         node->num_keys = MAX_KEYS / 2;
                         insert_key = node->keys[MAX_KEYS / 2];
                         right_pointer = new_node;
