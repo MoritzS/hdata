@@ -62,14 +62,14 @@ private:
         return max_bound;
     }
 
-    size_t search_leaf(KeyType const key, BPNode** leaf) const {
+    size_t search_leaf(KeyType const key, BPNode*& leaf) const {
         BPNode* node = root_node;
         while (true) {
             size_t index = search_in_node(node, key);
             if (node->type == BP_INNER) {
                 node = node->inner.pointers[index];
             } else {
-                *leaf = node;
+                leaf = node;
                 return index;
             }
         }
@@ -158,7 +158,7 @@ private:
             return false;
         } else {
             BPNode* node;
-            size_t index = search_leaf(key, &node);
+            size_t index = search_leaf(key, node);
             if (node->num_keys < MAX_KEYS) {
                 // insert key and value at index
                 move_keys(node, index);
@@ -487,7 +487,7 @@ public:
             return false;
         } else {
             BPNode* leaf;
-            size_t index = search_leaf(key, &leaf) - 1;
+            size_t index = search_leaf(key, leaf) - 1;
             if (index >= leaf->num_keys) {
                 return false;
             } else {
@@ -503,7 +503,7 @@ public:
     BPKeyValues search_iter(KeyType const key) const {
         if (root_node->num_keys > 0) {
             BPNode* leaf;
-            size_t index = search_leaf(key, &leaf) - 1;
+            size_t index = search_leaf(key, leaf) - 1;
             if (index < leaf->num_keys) {
                 if (key == leaf->keys[index]) {
                     return BPKeyValues(key, leaf, index);
@@ -516,7 +516,7 @@ public:
     BPKeyRange search_range(KeyType const key) const {
         if (root_node->num_keys > 0) {
             BPNode* leaf;
-            size_t index = search_leaf(key, &leaf);
+            size_t index = search_leaf(key, leaf);
             if (index == 0) {
                 if (leaf->leaf.prev == nullptr) {
                     return BPKeyRange(leaf, 0);
