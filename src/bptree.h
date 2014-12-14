@@ -143,6 +143,157 @@ private:
         );
     }
 
+    bool insert_leaf(
+        KeyType const key,
+        ValueType const& value,
+        KeyType& overflow_key,
+        size_t& insert_pos,
+        BPNode*& parent_node,
+        BPNode*& created_node
+    ) {
+        if (root_node->num_keys == 0) {
+            root_node->keys[0] = key;
+            root_node->leaf.leaf_values->values[0] = ValueType(value);
+            root_node->num_keys++;
+            return false;
+        } else {
+            BPNode* node;
+            size_t index = search_leaf(key, &node);
+            if (node->num_keys < MAX_KEYS) {
+                // insert key and value at index
+                move_keys(node, index);
+                move_values(node, index);
+                node->keys[index] = key;
+                node->leaf.leaf_values->values[index] = ValueType(value);
+                node->num_keys++;
+                return false;
+            } else {
+                // insert key and value at index but save the last key and value
+                // because they will be overwritten by move_keys and move_values
+                KeyType last_key;
+                ValueType last_value;
+                // if new key's insert index is greater than MAX_KEYS it simply is
+                // the last value
+                if (index >= MAX_KEYS) {
+                    last_key = key;
+                    last_value = value;
+                } else {
+                    last_key = node->keys[MAX_KEYS - 1];
+                    last_value = node->leaf.leaf_values->values[MAX_KEYS - 1];
+                    move_keys(node, index);
+                    move_values(node, index);
+                    node->keys[index] = key;
+                    node->leaf.leaf_values->values[index] = ValueType(value);
+                }
+                // copy the last MAX_KEYS / 2 - 1 keys and values from node to
+                // a new node
+                BPNode* new_node = alloc_leaf();
+                new_node->parent = node->parent;
+                copy_keys(node, new_node);
+                copy_values(node, new_node);
+                // insert last values at the end of the new node
+                new_node->keys[MAX_KEYS / 2 - 1] = last_key;
+                new_node->leaf.leaf_values->values[MAX_KEYS / 2 - 1] = last_value;
+                new_node->num_keys = MAX_KEYS / 2;
+                // update prev and next pointers
+                new_node->leaf.prev = node;
+                new_node->leaf.next = node->leaf.next;
+                node->num_keys = MAX_KEYS / 2 + 1;
+                if (node->leaf.next != nullptr) {
+                    node->leaf.next->leaf.prev = new_node;
+                }
+                node->leaf.next = new_node;
+
+                overflow_key = new_node->keys[0];
+                insert_pos = node->parent_pos;
+                parent_node = node->parent;
+                created_node = new_node;
+                return true;
+            }
+        }
+    }
+
+    bool insert_inner(
+        KeyType& insert_key,
+        size_t& insert_pos,
+        BPNode*& node,
+        BPNode*& created_node
+    ) {
+        if (node == nullptr) {
+            // create new root
+            BPNode* new_root = new BPNode();
+            new_root->type = BP_INNER;
+            new_root->parent = nullptr;
+            new_root->parent_pos = 0;
+            new_root->num_keys = 1;
+            new_root->keys[0] = insert_key;
+            new_root->inner.pointers[0] = root_node;
+            new_root->inner.pointers[1] = created_node;
+            root_node->parent = new_root;
+            created_node->parent = new_root;
+            created_node->parent_pos = 1;
+            root_node = new_root;
+            return false;
+        } else if (node->num_keys < MAX_KEYS) {
+            // just insert key and pointer in inner node
+            for (size_t i = insert_pos; i < node->num_keys; i++) {
+                node->inner.pointers[i + 1]->parent_pos++;
+            }
+            move_keys(node, insert_pos);
+            move_pointers(node, insert_pos + 1);
+            node->keys[insert_pos] = insert_key;
+            node->inner.pointers[insert_pos+1] = created_node;
+            node->num_keys++;
+            created_node->parent_pos = insert_pos + 1;
+            return false;
+        } else {
+            // insert key and pointer in inner node but save last key and
+            // pointer like in insert_leaf
+            KeyType last_key;
+            BPNode* last_pointer;
+            if (insert_pos >= MAX_KEYS) {
+                last_key = insert_key;
+                last_pointer = created_node;
+            } else {
+                last_key = node->keys[MAX_KEYS - 1];
+                last_pointer = node->inner.pointers[MAX_KEYS];
+                // moved nodes need to have their parent_pos updated
+                for (size_t i = insert_pos; i < node->num_keys; i++) {
+                    node->inner.pointers[i + 1]->parent_pos++;
+                }
+                move_keys(node, insert_pos);
+                move_pointers(node, insert_pos + 1);
+                node->keys[insert_pos] = insert_key;
+                created_node->parent_pos = insert_pos + 1;
+                node->inner.pointers[insert_pos+1] = created_node;
+            }
+            BPNode* new_node = new BPNode();
+            new_node->type = BP_INNER;
+            new_node->parent = node->parent;
+            new_node->inner.pointers[0] = node->inner.pointers[MAX_KEYS / 2 + 1];
+            copy_keys(node, new_node);
+            copy_pointers(node, new_node);
+            new_node->keys[MAX_KEYS / 2 - 1] = last_key;
+            new_node->inner.pointers[MAX_KEYS / 2] = last_pointer;
+            new_node->num_keys = MAX_KEYS / 2;
+            // pointers that were moved to the new_node need to have their
+            // parent and parent_pos updated
+            for (size_t i = 0; i <= MAX_KEYS / 2; i++) {
+                BPNode* moved_node = new_node->inner.pointers[i];
+                moved_node->parent = new_node;
+                moved_node->parent_pos = i;
+            }
+            node->num_keys = MAX_KEYS / 2;
+
+            insert_key = node->keys[MAX_KEYS / 2];
+            insert_pos = node->parent_pos;
+            node = node->parent;
+            created_node = new_node;
+            return true;
+        }
+    }
+
+
 public:
     class BPKeyIterator
     : public std::iterator<std::input_iterator_tag, ValueType, size_t> {
@@ -385,119 +536,15 @@ public:
     }
 
     void insert(KeyType const key, ValueType const& value) {
-        if (root_node->num_keys == 0) {
-            root_node->keys[0] = key;
-            root_node->leaf.leaf_values->values[0] = ValueType(value);
-            root_node->num_keys++;
-        } else {
-            BPNode* node;
-            size_t index = search_leaf(key, &node);
-            if (node->num_keys < MAX_KEYS) {
-                move_keys(node, index);
-                move_values(node, index);
-                node->keys[index] = key;
-                node->leaf.leaf_values->values[index] = ValueType(value);
-                node->num_keys++;
-            } else {
-                KeyType last_key;
-                ValueType last_value;
-                if (index >= MAX_KEYS) {
-                    last_key = key;
-                    last_value = value;
-                } else {
-                    last_key = node->keys[MAX_KEYS - 1];
-                    last_value = node->leaf.leaf_values->values[MAX_KEYS - 1];
-                    move_keys(node, index);
-                    move_values(node, index);
-                    node->keys[index] = key;
-                    node->leaf.leaf_values->values[index] = ValueType(value);
-                }
-                BPNode* new_node = alloc_leaf();
-                new_node->parent = node->parent;
-                copy_keys(node, new_node);
-                copy_values(node, new_node);
-                new_node->keys[MAX_KEYS / 2 - 1] = last_key;
-                new_node->leaf.leaf_values->values[MAX_KEYS / 2 - 1] = last_value;
-                new_node->num_keys = MAX_KEYS / 2;
-                new_node->leaf.prev = node;
-                new_node->leaf.next = node->leaf.next;
-                node->num_keys = MAX_KEYS / 2 + 1;
-                if (node->leaf.next != nullptr) {
-                    node->leaf.next->leaf.prev = new_node;
-                }
-                node->leaf.next = new_node;
-                BPNode* right_pointer = new_node;
-                KeyType insert_key = new_node->keys[0];
-                size_t insert_pos = node->parent_pos;
-                node = node->parent;
-                while (right_pointer != nullptr) {
-                    if (node == nullptr) {
-                        // create new root
-                        BPNode* new_root = new BPNode();
-                        new_root->type = BP_INNER;
-                        new_root->parent = nullptr;
-                        new_root->parent_pos = 0;
-                        new_root->num_keys = 1;
-                        new_root->keys[0] = insert_key;
-                        new_root->inner.pointers[0] = root_node;
-                        new_root->inner.pointers[1] = right_pointer;
-                        root_node->parent = new_root;
-                        right_pointer->parent = new_root;
-                        right_pointer->parent_pos = 1;
-                        root_node = new_root;
-                        right_pointer = nullptr;
-                    } else if (node->num_keys < MAX_KEYS) {
-                        // just insert key and pointer in inner node
-                        for (size_t i = insert_pos; i < node->num_keys; i++) {
-                            node->inner.pointers[i + 1]->parent_pos++;
-                        }
-                        move_keys(node, insert_pos);
-                        move_pointers(node, insert_pos + 1);
-                        node->keys[insert_pos] = insert_key;
-                        node->inner.pointers[insert_pos+1] = right_pointer;
-                        node->num_keys++;
-                        right_pointer->parent_pos = insert_pos + 1;
-                        right_pointer = nullptr;
-                    } else {
-                        // insert key and pointer in inner node and let the
-                        // middle element be propagated
-                        BPNode* last_pointer;
-                        if (insert_pos >= MAX_KEYS) {
-                            last_key = insert_key;
-                            last_pointer = right_pointer;
-                        } else {
-                            last_key = node->keys[MAX_KEYS - 1];
-                            last_pointer = node->inner.pointers[MAX_KEYS];
-                            for (size_t i = insert_pos; i < node->num_keys; i++) {
-                                node->inner.pointers[i + 1]->parent_pos++;
-                            }
-                            move_keys(node, insert_pos);
-                            move_pointers(node, insert_pos + 1);
-                            node->keys[insert_pos] = insert_key;
-                            right_pointer->parent_pos = insert_pos + 1;
-                            node->inner.pointers[insert_pos+1] = right_pointer;
-                        }
-                        new_node = new BPNode();
-                        new_node->type = BP_INNER;
-                        new_node->parent = node->parent;
-                        new_node->inner.pointers[0] = node->inner.pointers[MAX_KEYS / 2 + 1];
-                        copy_keys(node, new_node);
-                        copy_pointers(node, new_node);
-                        new_node->keys[MAX_KEYS / 2 - 1] = last_key;
-                        new_node->inner.pointers[MAX_KEYS / 2] = last_pointer;
-                        new_node->num_keys = MAX_KEYS / 2;
-                        for (size_t i = 0; i <= MAX_KEYS / 2; i++) {
-                            BPNode* moved_node = new_node->inner.pointers[i];
-                            moved_node->parent = new_node;
-                            moved_node->parent_pos = i;
-                        }
-                        node->num_keys = MAX_KEYS / 2;
-                        insert_key = node->keys[MAX_KEYS / 2];
-                        right_pointer = new_node;
-                        insert_pos = node->parent_pos;
-                        node = node->parent;
-                    }
-                }
+        KeyType overflow_key;
+        size_t insert_pos;
+        BPNode* parent_node;
+        BPNode* created_node;
+
+        if (insert_leaf(key, value, overflow_key, insert_pos, parent_node, created_node)) {
+            // insert overflowing values into inner nodes as long as
+            // an overflow occurs
+            while (insert_inner(overflow_key, insert_pos, parent_node, created_node)) {
             }
         }
     }
