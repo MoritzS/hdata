@@ -13,11 +13,11 @@ AC_PROG_CXX
 AX_CXX_COMPILE_STDCXX_11
 
 # Checks for libraries.
-AC_CHECK_LIB([readline], [readline])
+AC_CHECK_LIB([readline], [readline], [], [AC_MSG_ERROR([readline not found])])
 
 # Checks for header files.
 AC_CHECK_HEADERS([sstream])
-AC_CHECK_HEADERS([tclap/CmdLine.h])
+AC_CHECK_HEADERS([tclap/CmdLine.h], [], [AC_MSG_ERROR([tclap not found])])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_TYPE_INT32_T
