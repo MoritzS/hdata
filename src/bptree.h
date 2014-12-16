@@ -1,30 +1,52 @@
 #ifndef BPTREE_H
 #define BPTREE_H
 
+#include <config.h>
+
 #include <cstdint>
 #include <cstring>
 #include <iterator>
 #include <stack>
 
-template <class ValueType, class KeyType = int32_t, size_t MAX_KEYS = 8>
+#ifdef HAVE_IMMINTRIN_H
+#include <immintrin.h>
+#endif
+
+template <
+    class ValueType,
+    class KeyType = int,
+    size_t MAX_KEYS = 8,
+    size_t MAX_VALUES = 8
+>
 class BPTree {
+    static_assert(MAX_KEYS > 0, "MAX_KEYS must be greater than 0");
+    static_assert(MAX_KEYS % 2 == 0, "MAX_KEYS must be multiple of 2");
+    static_assert(
+        MAX_VALUES > 0 && MAX_VALUES <= 64,
+        "MAX_VALUES must be between 0 and 64"
+    );
+
 private:
     enum BPNodeType {BP_INNER, BP_LEAF};
 
+    struct BPValues {
+        size_t num_values;
+        uint64_t mask;
+        BPValues* next;
+        BPValues* prev;
+        ValueType values[MAX_VALUES];
+    };
+
     struct BPNode;
+
+    struct BPLeaf {
+        BPNode* prev;
+        BPNode* next;
+        ValueType* values[MAX_KEYS];
+    };
 
     struct BPInnerNode {
         BPNode* pointers[MAX_KEYS+1];
-    };
-
-    struct BPLeafValues {
-        ValueType values[MAX_KEYS];
-    };
-
-    struct BPLeaf {
-        BPLeafValues* leaf_values;
-        BPNode* prev;
-        BPNode* next;
     };
 
     struct BPNode {
@@ -40,13 +62,7 @@ private:
     };
 
     BPNode* root_node;
-
-    static BPNode* alloc_leaf() {
-        BPNode* node = new BPNode();
-        node->type = BP_LEAF;
-        node->leaf.leaf_values = new BPLeafValues();
-        return node;
-    }
+    BPValues* values;
 
     static size_t search_in_node(BPNode* node, KeyType const key) {
         size_t max_bound = node->num_keys;
@@ -96,9 +112,9 @@ private:
                 num_moving = node->num_keys - from - 1;
             }
             memmove(
-                node->leaf.leaf_values->values + from + 1,
-                node->leaf.leaf_values->values + from,
-                sizeof(ValueType) * num_moving
+                node->leaf.values + from + 1,
+                node->leaf.values + from,
+                sizeof(ValueType*) * num_moving
             );
         }
     }
@@ -129,9 +145,9 @@ private:
 
     static void copy_values(BPNode* node, BPNode* new_node) {
         memcpy(
-            new_node->leaf.leaf_values->values,
-            node->leaf.leaf_values->values + MAX_KEYS / 2 + 1,
-            sizeof(ValueType) * (MAX_KEYS / 2 - 1)
+            new_node->leaf.values,
+            node->leaf.values + MAX_KEYS / 2 + 1,
+            sizeof(ValueType*) * (MAX_KEYS / 2 - 1)
         );
     }
 
@@ -143,6 +159,43 @@ private:
         );
     }
 
+    ValueType* insert_value(ValueType const& value) {
+        if (values->num_values == 0) {
+            values->values[0] = value;
+            values->num_values++;
+            values->mask = (UINT64_C(1) << MAX_VALUES) - 2;
+            return values->values;
+        } else if (values->num_values >= MAX_VALUES) {
+            BPValues* new_values = new BPValues();
+            new_values->num_values = 1;
+            // set bit to 1 where the entry is empty
+            new_values->mask = (UINT64_C(1) << MAX_VALUES) - 2;
+            new_values->prev = nullptr;
+            new_values->values[0] = value;
+            new_values->next = values;
+            values->prev = new_values;
+            values = new_values;
+            return values->values;
+        } else {
+            size_t trailing_zeros;
+#ifdef HAVE_IMMINTRIN_H
+            trailing_zeros = _tzcnt_u64(values->mask);
+#else
+            uint64_t mask = values->mask;
+            trailing_zeros = 0;
+            while ((mask & 1) == 0) {
+                trailing_zeros++;
+                mask = mask >> 1;
+            }
+#endif
+            values->values[trailing_zeros] = value;
+            values->mask &= ~(UINT64_C(1) << trailing_zeros);
+            values->num_values++;
+            return values->values + trailing_zeros;
+        }
+    }
+
+
     bool insert_leaf(
         KeyType const key,
         ValueType const& value,
@@ -151,9 +204,10 @@ private:
         BPNode*& parent_node,
         BPNode*& created_node
     ) {
+        ValueType* value_p = insert_value(value);
         if (root_node->num_keys == 0) {
             root_node->keys[0] = key;
-            root_node->leaf.leaf_values->values[0] = ValueType(value);
+            root_node->leaf.values[0] = value_p;
             root_node->num_keys++;
             return false;
         } else {
@@ -164,36 +218,37 @@ private:
                 move_keys(node, index);
                 move_values(node, index);
                 node->keys[index] = key;
-                node->leaf.leaf_values->values[index] = ValueType(value);
+                node->leaf.values[index] = value_p;
                 node->num_keys++;
                 return false;
             } else {
                 // insert key and value at index but save the last key and value
                 // because they will be overwritten by move_keys and move_values
                 KeyType last_key;
-                ValueType last_value;
+                ValueType* last_value;
                 // if new key's insert index is greater than MAX_KEYS it simply is
                 // the last value
                 if (index >= MAX_KEYS) {
                     last_key = key;
-                    last_value = value;
+                    last_value = value_p;
                 } else {
                     last_key = node->keys[MAX_KEYS - 1];
-                    last_value = node->leaf.leaf_values->values[MAX_KEYS - 1];
+                    last_value = node->leaf.values[MAX_KEYS - 1];
                     move_keys(node, index);
                     move_values(node, index);
                     node->keys[index] = key;
-                    node->leaf.leaf_values->values[index] = ValueType(value);
+                    node->leaf.values[index] = value_p;
                 }
                 // copy the last MAX_KEYS / 2 - 1 keys and values from node to
                 // a new node
-                BPNode* new_node = alloc_leaf();
+                BPNode* new_node = new BPNode();
+                new_node->type = BP_LEAF;
                 new_node->parent = node->parent;
                 copy_keys(node, new_node);
                 copy_values(node, new_node);
                 // insert last values at the end of the new node
                 new_node->keys[MAX_KEYS / 2 - 1] = last_key;
-                new_node->leaf.leaf_values->values[MAX_KEYS / 2 - 1] = last_value;
+                new_node->leaf.values[MAX_KEYS / 2 - 1] = last_value;
                 new_node->num_keys = MAX_KEYS / 2;
                 // update prev and next pointers
                 new_node->leaf.prev = node;
@@ -293,7 +348,6 @@ private:
         }
     }
 
-
 public:
     class BPKeyIterator
     : public std::iterator<std::input_iterator_tag, ValueType, size_t> {
@@ -326,7 +380,7 @@ public:
         }
 
         ValueType& operator *() const {
-            return current_node->leaf.leaf_values->values[current_index];
+            return *current_node->leaf.values[current_index];
         }
 
         BPKeyIterator& operator ++() {
@@ -403,7 +457,7 @@ public:
         }
 
         ValueType& operator *() const {
-            return node->leaf.leaf_values->values[index];
+            return *node->leaf.values[index];
         }
 
         BPRangeIterator& operator ++() {
@@ -457,12 +511,17 @@ public:
     };
 
     BPTree() {
-        root_node = alloc_leaf();
+        root_node = new BPNode();
+        root_node->type = BP_LEAF;
         root_node->num_keys = 0;
         root_node->parent = nullptr;
         root_node->parent_pos = 0;
         root_node->leaf.prev = nullptr;
         root_node->leaf.next = nullptr;
+        values = new BPValues();
+        values->num_values = 0;
+        values->prev = nullptr;
+        values->next = nullptr;
     }
 
     ~BPTree() {
@@ -471,14 +530,18 @@ public:
         while (!nodes.empty()) {
             BPNode* node = nodes.top();
             nodes.pop();
-            if (node->type == BP_LEAF) {
-                delete node->leaf.leaf_values;
-            } else {
+            if (node->type == BP_INNER) {
                 for (size_t i=0; i <= node->num_keys; i++) {
                     nodes.push(node->inner.pointers[i]);
                 }
             }
             delete node;
+        }
+        BPValues* val = values;
+        while (val != nullptr) {
+            BPValues* next = val->prev;
+            delete val;
+            val = next;
         }
     }
 
@@ -493,7 +556,7 @@ public:
             } else {
                 bool is_key = key == leaf->keys[index];
                 if (is_key) {
-                    data = leaf->leaf.leaf_values->values[index];
+                    data = *leaf->leaf.values[index];
                 }
                 return is_key;
             }
