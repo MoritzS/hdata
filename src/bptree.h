@@ -555,6 +555,13 @@ public:
         }
     }
 
+    /*
+     * Searches for key.
+     * If key is found, data will contain the associated data and search
+     * returns true.
+     * Else it returns false.
+     * If there are duplicate keys, use search_iter instead.
+     */
     bool search(KeyType const key, ValueType& data) const {
         if (root_node->num_keys == 0) {
             return false;
@@ -573,6 +580,9 @@ public:
         }
     }
 
+    /*
+     * Search through all values with the same key
+     */
     BPKeyValues search_iter(KeyType const key) const {
         if (root_node->num_keys > 0) {
             BPNode* leaf;
@@ -586,6 +596,14 @@ public:
         return BPKeyValues(key);
     }
 
+    /*
+     * Search a key and return a container that can be used to make range queries.
+     * If the key is lower than all values in the tree, the container starts
+     * at the first key.
+     * If the key is greater than all values in the tree, the container starts
+     * at the last key.
+     * If the tree is empty, search_range returns an empty container.
+     */
     BPKeyRange search_range(KeyType const key) const {
         if (root_node->num_keys > 0) {
             BPNode* leaf;
@@ -603,11 +621,18 @@ public:
         return BPKeyRange();
     }
 
+    /*
+     * Count how often key is in the tree.
+     */
     size_t count_key(KeyType const key) const {
         BPKeyValues v = search_iter(key);
         return std::distance(std::begin(v), std::end(v));
     }
 
+    /*
+     * Insert key into tree. If key is already in the tree, it will be inserted
+     * a second time.
+     */
     void insert(KeyType const key, ValueType const& value) {
         KeyType overflow_key;
         size_t insert_pos;
