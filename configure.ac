@@ -8,10 +8,7 @@ AC_CONFIG_HEADERS([src/config.h])
 AM_INIT_AUTOMAKE([foreign])
 AC_LANG([C++])
 
-# Checks for programs.
-AC_PROG_CXX
-AX_CXX_COMPILE_STDCXX_11
-
+# configure arguments
 AC_ARG_ENABLE(
     [bmi],
     AS_HELP_STRING([--disable-bmi], [disable bmi SSE extension]),
@@ -24,6 +21,24 @@ AC_ARG_ENABLE(
     ],
     [use_bmi="try"]
 )
+
+AC_ARG_ENABLE(
+    [gtest],
+    AS_HELP_STRING([--disable-gtest], ["disable tests"]),
+    [
+        AS_CASE([$enableval],
+            [yes], [use_gtest="yes"],
+            [no], [use_gtest="no"],
+            [AC_MSG_ERROR([unexpected argument "$enableval" to --enable-gtest])]
+        )
+    ],
+    [use_gtest="yes"]
+)
+
+# Checks for programs.
+AC_PROG_CXX
+AX_CXX_COMPILE_STDCXX_11
+
 AS_IF([test "$use_bmi" = "yes" -o "$use_bmi" = "try"],
 [
     AX_CHECK_COMPILE_FLAG([-mbmi],
@@ -44,10 +59,25 @@ AS_IF([test "$use_bmi" = "yes" -o "$use_bmi" = "try"],
 
 # Checks for libraries.
 AC_CHECK_LIB([readline], [readline], [], [AC_MSG_ERROR([readline not found])])
+AS_IF([test "$use_gtest" = "yes"],
+[
+    AX_PTHREAD([],
+    [
+        use_gtest="no"
+        AC_MSG_WARN(["couldn't find pthread, tests not available"])
+    ])
+])
 
 # Checks for header files.
 AC_CHECK_HEADERS([sstream])
 AC_CHECK_HEADERS([tclap/CmdLine.h], [], [AC_MSG_ERROR([tclap not found])])
+AS_IF([test "$use_gtest" = "yes"],
+[
+    AC_CHECK_HEADERS([gtest/gtest.h], [], [
+        use_gtest="no"
+        AC_MSG_WARN(["couldn't find gtest headers, tests not available"])
+    ])
+])
 AS_IF([test "$cc_has_mbmi_flag" = "yes"],
 [
     AC_CHECK_HEADERS([immintrin.h], [], [AC_MSG_ERROR([immintrin.h not found])])
@@ -60,8 +90,9 @@ AC_TYPE_UINT64_T
 
 # Checks for library functions.
 
-AC_CONFIG_FILES([
-    Makefile
-    src/Makefile
+AC_CONFIG_FILES([Makefile src/Makefile])
+AS_IF([test "$use_gtest" = "yes"],
+[
+    AC_CONFIG_FILES([tests/Makefile])
 ])
 AC_OUTPUT
