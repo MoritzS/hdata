@@ -96,6 +96,15 @@ TEST_F(BPTreeTest, CountKeyTest) {
     }
 }
 
+TEST_F(BPTreeTest, EmptySearchTest) {
+    EXPECT_FALSE(tree.search_iter(TEST_MAX_KEY / 2).empty());
+    EXPECT_TRUE(tree.search_iter(TEST_MAX_KEY + 100).empty());
+    EXPECT_TRUE(tree.search_iter(-100).empty());
+
+    TestTree empty_tree;
+    EXPECT_TRUE(empty_tree.search_range(0).empty());
+}
+
 TEST_F(BPTreeTest, OutOfRangeTest) {
     EXPECT_EQ(0, *tree.search_range(-100).begin());
     EXPECT_EQ(TEST_MAX_KEY - 1, *tree.search_range(TEST_MAX_KEY+100).begin());

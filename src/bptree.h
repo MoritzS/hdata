@@ -419,6 +419,10 @@ public:
         : key(key), node(node), index(index) {
         }
 
+        bool empty() const {
+            return node == nullptr;
+        }
+
         BPKeyIterator begin() const {
             if (node == nullptr) {
                 return end();
@@ -497,6 +501,10 @@ public:
 
         BPKeyRange(BPNode const* const node, size_t const index)
         : node(node), index(index) {
+        }
+
+        bool empty() const {
+            return node == nullptr;
         }
 
         BPRangeIterator begin() const {
