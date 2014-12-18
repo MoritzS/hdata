@@ -3,6 +3,9 @@
 /* define if the compiler supports basic C++11 syntax */
 #undef HAVE_CXX11
 
+/* Define to 1 if you have the `ffsl' function. */
+#undef HAVE_FFSL
+
 /* Define to 1 if you have the <gtest/gtest.h> header file. */
 #undef HAVE_GTEST_GTEST_H
 
@@ -78,6 +81,9 @@
 
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS
+
+/* Define to 1 if bmi SSE extension is used */
+#undef USE_BMI
 
 /* Version number of package */
 #undef VERSION

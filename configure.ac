@@ -11,7 +11,7 @@ AC_LANG([C++])
 # configure arguments
 AC_ARG_ENABLE(
     [bmi],
-    AS_HELP_STRING([--disable-bmi], [disable bmi SSE extension]),
+    AS_HELP_STRING([--enable-bmi], [enable bmi SSE extension]),
     [
         AS_CASE([$enableval],
             [yes], [use_bmi="yes"],
@@ -19,7 +19,7 @@ AC_ARG_ENABLE(
             [AC_MSG_ERROR([unexpected argument "$enableval" to --enable-bmi])]
         )
     ],
-    [use_bmi="try"]
+    [use_bmi="no"]
 )
 
 AC_ARG_ENABLE(
@@ -39,19 +39,17 @@ AC_ARG_ENABLE(
 AC_PROG_CXX
 AX_CXX_COMPILE_STDCXX_11
 
-AS_IF([test "$use_bmi" = "yes" -o "$use_bmi" = "try"],
+AS_IF([test "$use_bmi" = "yes"],
 [
     AX_CHECK_COMPILE_FLAG([-mbmi],
         [
             AM_CPPFLAGS="$AM_CPPFLAGS -mbmi"
             CPPFLAGS="$CPPFLAGS -mbmi"
             cc_has_mbmi_flag="yes"
+            AC_DEFINE([USE_BMI], [1], [Define to 1 if bmi SSE extension is used])
         ],
         [
-            AS_IF([test "$use_bmi" = "yes"],
-            [
-                AC_MSG_ERROR([requested bmi but compiler flag "-mbmi" does not work])
-            ])
+            AC_MSG_ERROR([requested bmi but compiler flag "-mbmi" does not work])
             cc_has_mbmi_flag="no"
         ]
     )
@@ -78,7 +76,7 @@ AS_IF([test "$use_gtest" = "yes"],
         AC_MSG_WARN(["couldn't find gtest headers, tests not available"])
     ])
 ])
-AS_IF([test "$cc_has_mbmi_flag" = "yes"],
+AS_IF([test "$use_mbmi" = "yes" -a "$cc_has_mbmi_flag" = "yes"],
 [
     AC_CHECK_HEADERS([immintrin.h], [], [AC_MSG_ERROR([immintrin.h not found])])
 ])
@@ -89,6 +87,7 @@ AC_TYPE_SIZE_T
 AC_TYPE_UINT64_T
 
 # Checks for library functions.
+AC_CHECK_FUNCS([ffsl])
 
 AC_CONFIG_FILES([Makefile src/Makefile])
 AS_IF([test "$use_gtest" = "yes"],

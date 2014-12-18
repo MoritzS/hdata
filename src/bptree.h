@@ -8,7 +8,7 @@
 #include <iterator>
 #include <stack>
 
-#ifdef HAVE_IMMINTRIN_H
+#ifdef USE_BMI
 #include <immintrin.h>
 #endif
 
@@ -178,8 +178,10 @@ private:
             return values->values;
         } else {
             size_t trailing_zeros;
-#ifdef HAVE_IMMINTRIN_H
+#ifdef USE_BMI
             trailing_zeros = _tzcnt_u64(values->mask);
+#elif defined(HAVE_FFSL)
+            trailing_zeros = ffsl(values->mask) - 1;
 #else
             uint64_t mask = values->mask;
             trailing_zeros = 0;
