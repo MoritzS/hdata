@@ -38,6 +38,34 @@ size_t read_locations(std::ifstream& file, LocationTree& tree) {
     return locations_read;
 }
 
+size_t read_ni_edges(std::ifstream& file, NIEdgeTree& output) {
+    using namespace std;
+    size_t edges_read = 0;
+    while (1) {
+        string line;
+        getline(file, line);
+        if (file.eof()) {
+            break;
+        }
+        NIEdge edge;
+        stringstream line_stream(line);
+        try {
+            string s;
+            getline(line_stream, s, '|');
+            edge.loc_id = stou_safe(s);
+            getline(line_stream, s, '|');
+            edge.lower = stou_safe(s);
+            getline(line_stream, s, '|');
+            edge.upper = stou_safe(s);
+        } catch (logic_error& e) {
+            continue;
+        }
+        output.insert(edge.loc_id, edge);
+        edges_read++;
+    }
+    return edges_read;
+}
+
 ModeInfo adjModeInfo = {
     // init_mode
     [] (std::ifstream& file, ModeData& data) {
@@ -149,31 +177,7 @@ ModeInfo niModeInfo = {
         data.ni = new NiModeData();
         cout << "reading ni edges... ";
         cout.flush();
-        size_t edges_read = 0;
-        NIEdgeTree& edges = data.ni->edges;
-        while (1) {
-            string line;
-            getline(file, line);
-            if (file.eof()) {
-                break;
-            }
-            NIEdge edge;
-            stringstream line_stream(line);
-            try {
-                string s;
-                getline(line_stream, s, '|');
-                edge.loc_id = stou_safe(s);
-                getline(line_stream, s, '|');
-                edge.lower = stou_safe(s);
-                getline(line_stream, s, '|');
-                edge.upper = stou_safe(s);
-            } catch (logic_error& e) {
-                continue;
-            }
-            edges.insert(edge.loc_id, edge);
-            edges_read++;
-        }
-        cout << "got " << edges_read << endl;
+        cout << "got " << read_ni_edges(file, data.ni->edges) << endl;
         return 0;
     },
     // run_input

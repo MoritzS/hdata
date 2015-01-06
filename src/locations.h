@@ -28,6 +28,7 @@ typedef BPTree<AdjacentLocation, uint32_t> AdjLocTree;
 typedef BPTree<NIEdge, uint32_t> NIEdgeTree;
 
 size_t read_locations(std::ifstream& file, LocationTree& output);
+size_t read_ni_edges(std::ifstream& file, BPTree<NIEdge>& output);
 
 struct AdjModeData {
     AdjLocTree edges;
