@@ -1,4 +1,5 @@
 #include <cstdint>
+#include <limits>
 #include <string>
 #include <gtest/gtest.h>
 #include "bptree.h"
@@ -75,17 +76,18 @@ TYPED_TEST(BPTreeSanityTest, ManyKeysDescendingInsert) {
 }
 
 
-typedef BPTree<int32_t, int32_t> TestTree;
-
+template <class T>
 class BPTreeTest
 : public ::testing::Test {
 public:
+    typedef T KeyType;
+    typedef BPTree<T, T> TestTree;
     TestTree tree;
 
     virtual void SetUp() {
-        for (int32_t i = 5; i <= TEST_MAX_KEY; i += 5) {
-            for (int32_t j = 1; j <= 5; j++) {
-                int32_t key = i - j;
+        for (KeyType i = 6; i <= TEST_MAX_KEY + 1; i += 5) {
+            for (KeyType j = 1; j <= 5; j++) {
+                KeyType key = i - j;
                 for (int k=0; k < NUM_DUPLICATE; k++) {
                     tree.insert(key, key);
                 }
@@ -94,31 +96,34 @@ public:
     }
 };
 
-TEST_F(BPTreeTest, PseudoRandomInsert) {
-    for (int32_t i=0; i < TEST_MAX_KEY; i++) {
-        int32_t value;
-        ASSERT_TRUE(tree.search(i, value));
+TYPED_TEST_CASE(BPTreeTest, TreeKeyTypes);
+
+
+TYPED_TEST(BPTreeTest, PseudoRandomInsert) {
+    for (typename TestFixture::KeyType i = 1; i < TEST_MAX_KEY; i++) {
+        typename TestFixture::KeyType value;
+        ASSERT_TRUE(this->tree.search(i, value));
         EXPECT_EQ(i, value);
     }
 }
 
-TEST_F(BPTreeTest, CountKeyTest) {
-    for (int32_t i=0; i < TEST_MAX_KEY; i++) {
-        size_t count = tree.count_key(i);
+TYPED_TEST(BPTreeTest, CountKeyTest) {
+    for (typename TestFixture::KeyType i = 1; i < TEST_MAX_KEY; i++) {
+        size_t count = this->tree.count_key(i);
         EXPECT_EQ(NUM_DUPLICATE, count);
     }
 }
 
-TEST_F(BPTreeTest, EmptySearchTest) {
-    EXPECT_FALSE(tree.search_iter(TEST_MAX_KEY / 2).empty());
-    EXPECT_TRUE(tree.search_iter(TEST_MAX_KEY + 100).empty());
-    EXPECT_TRUE(tree.search_iter(-100).empty());
+TYPED_TEST(BPTreeTest, EmptySearchTest) {
+    EXPECT_FALSE(this->tree.search_iter(TEST_MAX_KEY / 2).empty());
+    EXPECT_TRUE(this->tree.search_iter(TEST_MAX_KEY + 100).empty());
+    EXPECT_TRUE(this->tree.search_iter(0).empty());
 
-    TestTree empty_tree;
+    typename TestFixture::TestTree empty_tree;
     EXPECT_TRUE(empty_tree.search_range(0).empty());
 }
 
-TEST_F(BPTreeTest, OutOfRangeTest) {
-    EXPECT_EQ(0, *tree.search_range(-100).begin());
-    EXPECT_EQ(TEST_MAX_KEY - 1, *tree.search_range(TEST_MAX_KEY+100).begin());
+TYPED_TEST(BPTreeTest, OutOfRangeTest) {
+    EXPECT_EQ(1, *(this->tree.search_range(0).begin()));
+    EXPECT_EQ(TEST_MAX_KEY, *(this->tree.search_range(TEST_MAX_KEY+100).begin()));
 }
