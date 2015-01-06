@@ -10,7 +10,6 @@
 #include <readline/history.h>
 #include <tclap/CmdLine.h>
 
-#include "bptree.h"
 #include "locations.h"
 
 
@@ -86,7 +85,7 @@ int main(int argc, char** argv) {
         cerr << "couldn't read locations file" << endl;
         return 1;
     }
-    BPTree<Location> locs_tree;
+    LocationTree locs_tree;
     size_t num_locs;
     cout << "reading locations... ";
     cout.flush();

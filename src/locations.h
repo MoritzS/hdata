@@ -23,12 +23,18 @@ struct NIEdge {
     uint32_t upper;
 };
 
+typedef BPTree<Location, uint32_t> LocationTree;
+typedef BPTree<AdjacentLocation, uint32_t> AdjLocTree;
+typedef BPTree<NIEdge, uint32_t> NIEdgeTree;
+
+size_t read_locations(std::ifstream& file, LocationTree& output);
+
 struct AdjModeData {
-    BPTree<AdjacentLocation> edges;
+    AdjLocTree edges;
 };
 
 struct NiModeData {
-    BPTree<NIEdge> edges;
+    NIEdgeTree edges;
 };
 
 struct DeltaniModeData{
@@ -43,14 +49,12 @@ union ModeData {
 
 struct ModeInfo {
     int (*init_mode)(std::ifstream&, ModeData&);
-    int (*run_input)(BPTree<Location>&, ModeData&, std::string&);
+    int (*run_input)(LocationTree&, ModeData&, std::string&);
     int (*exit_mode)(ModeData&);
 };
 
 extern ModeInfo adjModeInfo;
 extern ModeInfo niModeInfo;
 extern ModeInfo deltaniModeInfo;
-
-size_t read_locations(std::ifstream& file, BPTree<Location>& output);
 
 #endif

@@ -9,7 +9,7 @@
 #include "util.h"
 
 
-size_t read_locations(std::ifstream& file, BPTree<Location>& tree) {
+size_t read_locations(std::ifstream& file, LocationTree& tree) {
     using namespace std;
     size_t locations_read = 0;
     while(1) {
@@ -31,7 +31,7 @@ size_t read_locations(std::ifstream& file, BPTree<Location>& tree) {
         if (!s.empty()) {
             size_t length = s.copy(loc.name, 127);
             loc.name[length] = 0;
-            tree.insert((int32_t)loc.id, loc);
+            tree.insert(loc.id, loc);
             locations_read++;
         }
     }
@@ -46,7 +46,7 @@ ModeInfo adjModeInfo = {
         cout << "reading edges... ";
         cout.flush();
         size_t edges_read = 0;
-        BPTree<AdjacentLocation>& edges = data.adj->edges;
+        AdjLocTree& edges = data.adj->edges;
         while (1) {
             string line;
             getline(file, line);
@@ -64,14 +64,14 @@ ModeInfo adjModeInfo = {
             } catch (logic_error& e) {
                 continue;
             }
-            edges.insert((int32_t)edge.parent_id, edge);
+            edges.insert(edge.parent_id, edge);
             edges_read++;
         }
         cout << "got " << edges_read << endl;
         return 0;
     },
     // run_input
-    [] (BPTree<Location>& locs, ModeData& data, std::string& input) {
+    [] (LocationTree& locs, ModeData& data, std::string& input) {
         using namespace std;
         stringstream stream(input);
         string s;
@@ -85,7 +85,7 @@ ModeInfo adjModeInfo = {
             cout << "searching id " << loc_id << ": ";
             cout.flush();
             Location loc;
-            if (locs.search((int32_t)loc_id, loc)) {
+            if (locs.search(loc_id, loc)) {
                 cout << "found \"" << loc.name << '"' << endl;
             } else {
                 cout << "not found" << endl;
@@ -150,7 +150,7 @@ ModeInfo niModeInfo = {
         cout << "reading ni edges... ";
         cout.flush();
         size_t edges_read = 0;
-        BPTree<NIEdge>& edges = data.ni->edges;
+        NIEdgeTree& edges = data.ni->edges;
         while (1) {
             string line;
             getline(file, line);
@@ -170,14 +170,14 @@ ModeInfo niModeInfo = {
             } catch (logic_error& e) {
                 continue;
             }
-            edges.insert((int32_t)edge.loc_id, edge);
+            edges.insert(edge.loc_id, edge);
             edges_read++;
         }
         cout << "got " << edges_read << endl;
         return 0;
     },
     // run_input
-    [] (BPTree<Location>& locs, ModeData& data, std::string& input) {
+    [] (LocationTree& locs, ModeData& data, std::string& input) {
         using namespace std;
         stringstream stream(input);
         string s;
