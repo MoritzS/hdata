@@ -1,72 +1,85 @@
 #include <cstdint>
+#include <string>
 #include <gtest/gtest.h>
 #include "bptree.h"
 
 int const TEST_MAX_KEY = 100000;
 int const NUM_DUPLICATE = 13;
 
-typedef BPTree<int32_t, int32_t, 8, 8> TestTree;
-typedef BPTree<int32_t, int32_t, 60, 61> ManyKeysTree;
+template <class KeyType>
+class BPTreeSanityTest
+: public ::testing::Test {
+public:
+    typedef KeyType Key;
+    typedef BPTree<std::string, KeyType, 8, 8> Tree;
+    typedef BPTree<std::string, KeyType, 60, 61> ManyKeysTree;
+};
 
-TEST(BPTreeSanityTest, AscendingInsert) {
-    TestTree tree;
+typedef ::testing::Types<int32_t, int64_t, uint32_t, uint64_t> TreeKeyTypes;
+TYPED_TEST_CASE(BPTreeSanityTest, TreeKeyTypes);
 
-    for (int32_t i = 0; i < TEST_MAX_KEY; i++) {
-        tree.insert(i, i);
+TYPED_TEST(BPTreeSanityTest, AscendingInsert) {
+    typename TestFixture::Tree tree;
+
+    for (typename TestFixture::Key i = 0; i < TEST_MAX_KEY; i++) {
+        tree.insert(i, std::to_string(i));
     }
 
-    for (int32_t i = 0; i < TEST_MAX_KEY; i++) {
-        int32_t value;
+    for (typename TestFixture::Key i = 0; i < TEST_MAX_KEY; i++) {
+        std::string value;
         ASSERT_TRUE(tree.search(i, value));
-        EXPECT_EQ(i, value);
+        EXPECT_EQ(std::to_string(i), value);
     }
 }
 
-TEST(BPTreeSanityTest, DescendingInsert) {
-    TestTree tree;
+TYPED_TEST(BPTreeSanityTest, DescendingInsert) {
+    typename TestFixture::Tree tree;
 
-    for (int32_t i = TEST_MAX_KEY - 1; i >=0; i--) {
-        tree.insert(i, i);
+    for (typename TestFixture::Key i = TEST_MAX_KEY - 1; i >= 0 && i < TEST_MAX_KEY; i--) {
+        tree.insert(i, std::to_string(i));
     }
 
-    for (int32_t i = 0; i < TEST_MAX_KEY; i++) {
-        int32_t value;
+    for (typename TestFixture::Key i = 0; i < TEST_MAX_KEY; i++) {
+        std::string value;
         ASSERT_TRUE(tree.search(i, value));
-        EXPECT_EQ(i, value);
+        EXPECT_EQ(std::to_string(i), value);
     }
 }
 
-TEST(BPTreeSanityTest, ManyKeysAscendingInsert) {
-    ManyKeysTree tree;
+TYPED_TEST(BPTreeSanityTest, ManyKeysAscendingInsert) {
+    typename TestFixture::ManyKeysTree tree;
 
-    for (int32_t i = 0; i < TEST_MAX_KEY; i++) {
-        tree.insert(i, i);
+    for (typename TestFixture::Key i = 0; i < TEST_MAX_KEY; i++) {
+        tree.insert(i, std::to_string(i));
     }
 
-    for (int32_t i = 0; i < TEST_MAX_KEY; i++) {
-        int32_t value;
+    for (typename TestFixture::Key i = 0; i < TEST_MAX_KEY; i++) {
+        std::string value;
         ASSERT_TRUE(tree.search(i, value));
-        EXPECT_EQ(i, value);
+        EXPECT_EQ(std::to_string(i), value);
     }
 }
 
-TEST(BPTreeSanityTest, ManyKeysDescendingInsert) {
-    ManyKeysTree tree;
+TYPED_TEST(BPTreeSanityTest, ManyKeysDescendingInsert) {
+    typename TestFixture::ManyKeysTree tree;
 
-    for (int32_t i = TEST_MAX_KEY - 1; i >=0; i--) {
-        tree.insert(i, i);
+    for (typename TestFixture::Key i = TEST_MAX_KEY - 1; i >= 0 && i < TEST_MAX_KEY; i--) {
+        tree.insert(i, std::to_string(i));
     }
 
-    for (int32_t i = 0; i < TEST_MAX_KEY; i++) {
-        int32_t value;
+    for (typename TestFixture::Key i = 0; i < TEST_MAX_KEY; i++) {
+        std::string value;
         ASSERT_TRUE(tree.search(i, value));
-        EXPECT_EQ(i, value);
+        EXPECT_EQ(std::to_string(i), value);
     }
 }
+
+
+typedef BPTree<int32_t, int32_t> TestTree;
 
 class BPTreeTest
 : public ::testing::Test {
-protected:
+public:
     TestTree tree;
 
     virtual void SetUp() {
