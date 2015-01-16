@@ -38,6 +38,18 @@ struct NiModeData {
     NIEdgeTree edges;
 };
 
+struct DeltaRange {
+    uint32_t from;
+    uint32_t to;
+};
+
+struct DeltaFunction {
+    BPTree<DeltaRange, uint32_t> ranges;
+    uint32_t max;
+
+    NIEdge apply(NIEdge const& edge) const;
+};
+
 struct DeltaniModeData{
 };
 
