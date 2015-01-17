@@ -299,6 +299,56 @@ DeltaFunction DeltaFunction::merge(DeltaFunction const& delta) const {
     return new_delta;
 }
 
+NIEdge DeltaVersions::get_version(NIEdge const& edge, size_t version) const {
+    if (version > max_version()) {
+        version = max_version();
+    }
+    if (version == 0) {
+        return edge;
+    }
+
+    // power = floor(log2(version));
+    size_t power = sizeof(size_t) * 8 - 1;
+    while (version >> power == 0) {
+        power--;
+    }
+
+    NIEdge new_edge = edge;
+    size_t current_version = 0;
+    while (current_version < version) {
+        size_t step = UINTMAX_C(1) << power;
+        new_edge = deltas[power][current_version / step].apply(new_edge);
+        current_version += step;
+        if (power > 0) {
+            power--;
+            while (version >> power == 0) {
+                power--;
+            }
+        }
+    };
+    return new_edge;
+}
+
+size_t DeltaVersions::insert_delta(DeltaFunction const& delta) {
+    if (deltas.empty()) {
+        deltas.emplace_back();
+        deltas[0].push_back(delta);
+        return 1;
+    } else {
+        deltas[0].push_back(delta);
+        size_t size = deltas[0].size();
+        for (size_t level = 0; size % 2 == 0; level++) {
+            if (level + 1 >= deltas.size()) {
+                deltas.emplace_back();
+            }
+            DeltaFunction merged = deltas[level][size-2].merge(deltas[level][size-1]);
+            deltas[level + 1].push_back(merged);
+            size = deltas[level + 1].size();
+        }
+        return deltas[0].size();
+    }
+}
+
 ModeInfo deltaniModeInfo = {
     nullptr,
     nullptr,

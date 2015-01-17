@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <fstream>
 #include <string>
+#include <vector>
 
 #include "bptree.h"
 
@@ -58,6 +59,19 @@ public:
     uint32_t evaluate_inv(uint32_t const value) const;
     NIEdge apply(NIEdge const& edge) const;
     DeltaFunction merge(DeltaFunction const& delta) const;
+};
+
+class DeltaVersions {
+private:
+    std::vector<std::vector<DeltaFunction>> deltas;
+
+public:
+    inline size_t max_version() const {
+        return deltas[0].size();
+    }
+
+    NIEdge get_version(NIEdge const& edge, size_t version) const;
+    size_t insert_delta(DeltaFunction const& delta);
 };
 
 struct DeltaniModeData{

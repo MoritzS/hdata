@@ -85,3 +85,109 @@ TEST_F(DeltaFunctionTest, Merge) {
         EXPECT_EQ(m.evaluate(d.evaluate(i)), merged.evaluate(i));
     }
 }
+
+
+class DeltaVersionsTest
+: public ::testing::Test {
+public:
+    DeltaVersions versions;
+
+    virtual void SetUp() {
+        DeltaFunction v1;
+        v1.add_range({1, 1});
+        v1.add_range({5, 7});
+        v1.add_range({6, 5});
+        v1.add_range({8, 8});
+        v1.max = 9;
+        versions.insert_delta(v1);
+
+        DeltaFunction v2;
+        v2.add_range({1, 1});
+        v2.add_range({3, 7});
+        v2.add_range({5, 3});
+        v2.max = 7;
+        versions.insert_delta(v2);
+
+        DeltaFunction v3;
+        v3.add_range({1, 1});
+        v3.add_range({2, 4});
+        v3.add_range({9, 2});
+        v3.max = 9;
+        versions.insert_delta(v3);
+
+        DeltaFunction v4;
+        v4.add_range({1, 1});
+        v4.add_range({2, 3});
+        v4.add_range({4, 6});
+        v4.add_range({11, 2});
+        v4.add_range({12, 5});
+        v4.max = 11;
+        versions.insert_delta(v4);
+    }
+};
+
+TEST_F(DeltaVersionsTest, MaxVersion) {
+    EXPECT_EQ(4, versions.max_version());
+}
+
+TEST_F(DeltaVersionsTest, NullVersion) {
+    NIEdge e;
+
+    e = versions.get_version({123, 1, 8}, 0);
+    EXPECT_EQ(123, e.loc_id);
+    EXPECT_EQ(1, e.lower);
+    EXPECT_EQ(8, e.upper);
+
+    e = versions.get_version({123, 2, 5}, 0);
+    EXPECT_EQ(123, e.loc_id);
+    EXPECT_EQ(2, e.lower);
+    EXPECT_EQ(5, e.upper);
+
+    e = versions.get_version({123, 3, 4}, 0);
+    EXPECT_EQ(123, e.loc_id);
+    EXPECT_EQ(3, e.lower);
+    EXPECT_EQ(4, e.upper);
+
+    e = versions.get_version({123, 6, 7}, 0);
+    EXPECT_EQ(123, e.loc_id);
+    EXPECT_EQ(6, e.lower);
+    EXPECT_EQ(7, e.upper);
+}
+
+TEST_F(DeltaVersionsTest, SingleStep) {
+    NIEdge e;
+
+    e = versions.get_version({123, 6, 7}, 1);
+    EXPECT_EQ(123, e.loc_id);
+    EXPECT_EQ(5, e.lower);
+    EXPECT_EQ(6, e.upper);
+
+    e = versions.get_version({123, 3, 4}, 2);
+    EXPECT_EQ(123, e.loc_id);
+    EXPECT_EQ(7, e.lower);
+    EXPECT_EQ(8, e.upper);
+
+    e = versions.get_version({123, 2, 5}, 4);
+    EXPECT_EQ(123, e.loc_id);
+    EXPECT_EQ(6, e.lower);
+    EXPECT_EQ(9, e.upper);
+}
+
+TEST_F(DeltaVersionsTest, MultipleStep) {
+    NIEdge e;
+
+    e = versions.get_version({123, 2, 5}, 3);
+    EXPECT_EQ(123, e.loc_id);
+    EXPECT_EQ(4, e.lower);
+    EXPECT_EQ(7, e.upper);
+
+    e = versions.get_version({123, 3, 4}, 3);
+    EXPECT_EQ(123, e.loc_id);
+    EXPECT_EQ(9, e.lower);
+    EXPECT_EQ(10, e.upper);
+
+    e = versions.get_version({123, 6, 7}, 3);
+    EXPECT_EQ(123, e.loc_id);
+    EXPECT_EQ(5, e.lower);
+    EXPECT_EQ(6, e.upper);
+}
