@@ -284,6 +284,21 @@ NIEdge DeltaFunction::apply(NIEdge const& edge) const {
     return new_edge;
 }
 
+DeltaFunction DeltaFunction::merge(DeltaFunction const& delta) const {
+    DeltaFunction new_delta;
+    new_delta.max = delta.max;
+    for (DeltaRange range : ranges.search_range(0)) {
+        new_delta.add_range({range.from, delta.evaluate(range.to)});
+    }
+    for (DeltaRange range : delta.ranges.search_range(0)) {
+        uint32_t from = evaluate_inv(range.from);
+        if (new_delta.ranges.count_key(from) == 0) {
+            new_delta.add_range({from, range.to});
+        }
+    }
+    return new_delta;
+}
+
 ModeInfo deltaniModeInfo = {
     nullptr,
     nullptr,

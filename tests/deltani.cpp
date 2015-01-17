@@ -1,3 +1,4 @@
+#include <cstdint>
 #include <gtest/gtest.h>
 #include "locations.h"
 
@@ -65,4 +66,22 @@ TEST_F(DeltaFunctionTest, AdvancedApply) {
     EXPECT_EQ(123, e.loc_id);
     EXPECT_EQ(5, e.lower);
     EXPECT_EQ(6, e.upper);
+}
+
+TEST_F(DeltaFunctionTest, Merge) {
+    DeltaFunction m;
+    DeltaFunction merged;
+
+    m.add_range({1, 1});
+    m.add_range({3, 7});
+    m.add_range({5, 3});
+    m.max = 7;
+
+    merged = d.merge(m);
+
+    EXPECT_EQ(7, merged.max);
+
+    for (uint32_t i = 1; i <= 8; i++) {
+        EXPECT_EQ(m.evaluate(d.evaluate(i)), merged.evaluate(i));
+    }
 }

@@ -57,6 +57,7 @@ public:
     uint32_t evaluate(uint32_t const value) const;
     uint32_t evaluate_inv(uint32_t const value) const;
     NIEdge apply(NIEdge const& edge) const;
+    DeltaFunction merge(DeltaFunction const& delta) const;
 };
 
 struct DeltaniModeData{
