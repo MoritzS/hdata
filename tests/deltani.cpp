@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include "locations.h"
 
-class DeltaniTest
+class DeltaFunctionTest
 : public ::testing::Test {
 public:
     DeltaFunction d;
@@ -15,7 +15,19 @@ public:
     }
 };
 
-TEST_F(DeltaniTest, SimpleApply) {
+TEST_F(DeltaFunctionTest, Evaluate) {
+    EXPECT_EQ(1, d.evaluate(1));
+    EXPECT_EQ(2, d.evaluate(2));
+    EXPECT_EQ(5, d.evaluate(3));
+    EXPECT_EQ(6, d.evaluate(4));
+    EXPECT_EQ(7, d.evaluate(5));
+    EXPECT_EQ(3, d.evaluate(6));
+    EXPECT_EQ(4, d.evaluate(7));
+    EXPECT_EQ(8, d.evaluate(8));
+    EXPECT_EQ(9, d.evaluate(9));
+}
+
+TEST_F(DeltaFunctionTest, SimpleApply) {
     NIEdge e;
 
     e = d.apply({123, 1, 2});
@@ -34,7 +46,7 @@ TEST_F(DeltaniTest, SimpleApply) {
     EXPECT_EQ(8, e.upper);
 }
 
-TEST_F(DeltaniTest, AdvancedApply) {
+TEST_F(DeltaFunctionTest, AdvancedApply) {
     NIEdge e;
 
     e = d.apply({123, 1, 4});

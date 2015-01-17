@@ -47,6 +47,7 @@ struct DeltaFunction {
     BPTree<DeltaRange, uint32_t> ranges;
     uint32_t max;
 
+    uint32_t evaluate(uint32_t const value) const;
     NIEdge apply(NIEdge const& edge) const;
 };
 

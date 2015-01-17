@@ -261,15 +261,16 @@ ModeInfo niModeInfo = {
     }
 };
 
+uint32_t DeltaFunction::evaluate(uint32_t const value) const {
+    DeltaRange const& range = *ranges.search_range(value).begin();
+    return value + range.to - range.from;
+}
+
 NIEdge DeltaFunction::apply(NIEdge const& edge) const {
     NIEdge new_edge;
     new_edge.loc_id = edge.loc_id;
-
-    DeltaRange const& lower = *ranges.search_range(edge.lower).begin();
-    new_edge.lower = edge.lower + lower.to - lower.from;
-
-    DeltaRange const& upper = *ranges.search_range(edge.upper).begin();
-    new_edge.upper = edge.upper + upper.to - upper.from;
+    new_edge.lower = evaluate(edge.lower);
+    new_edge.upper = evaluate(edge.upper);
     return new_edge;
 }
 
