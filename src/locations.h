@@ -75,6 +75,8 @@ public:
 };
 
 struct DeltaniModeData{
+    NIEdgeTree edges;
+    DeltaVersions versions;
 };
 
 union ModeData {

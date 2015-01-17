@@ -73,11 +73,6 @@ int main(int argc, char** argv) {
         mode_info = adjModeInfo;
     }
 
-    if (!(mode == MODE_ADJ || mode == MODE_NI)) {
-        cerr << "Only \"adj\" and \"ni\" modes are implemented!" << endl;
-        return 1;
-    }
-
     cout << "Running in \"" << strMode << "\" mode" << endl;
 
     ifstream locs_file(locsArg.getValue());

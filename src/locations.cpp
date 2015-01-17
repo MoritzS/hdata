@@ -350,7 +350,74 @@ size_t DeltaVersions::insert_delta(DeltaFunction const& delta) {
 }
 
 ModeInfo deltaniModeInfo = {
-    nullptr,
-    nullptr,
-    nullptr
+    // init_mode
+    [] (std::ifstream& file, ModeData& data) {
+        using namespace std;
+        data.deltani = new DeltaniModeData();
+        cout << "reading ni edges... ";
+        cout.flush();
+        cout << "got " << read_ni_edges(file, data.ni->edges) << endl;
+        cout << "generating initial version... ";
+        cout.flush();
+        // search root (edge with e.lower == 1)
+        for (NIEdge& e : data.deltani->edges.search_range(0)) {
+            if (e.lower == 1) {
+                DeltaFunction init_version;
+                init_version.add_range({1, 1});
+                init_version.max = e.upper;
+                data.deltani->versions.insert_delta(init_version);
+                goto found_version;
+            }
+        }
+        cout << "root of tree not found" << endl;
+        return 1;
+found_version:
+        cout << "done" << endl;
+        return 0;
+    },
+    // run_input
+    [] (LocationTree& locs, ModeData& data, std::string& input) {
+        using namespace std;
+        stringstream stream(input);
+        string s;
+        stream >> s;
+        if (s == "is_ancestor") {
+            uint32_t version;
+            uint32_t parent_id;
+            uint32_t child_id;
+            if (!(stream_ui(stream, version))) {
+                cout << "invalid version" << endl;
+                return 0;
+            }
+            if (!(stream_ui(stream, parent_id) && stream_ui(stream, child_id))) {
+                cout << "invalid ids" << endl;
+                return 0;
+            }
+            NIEdge parent_ni;
+            NIEdge child_ni;
+            if (!(data.deltani->edges.search(parent_id, parent_ni) &&
+                data.deltani->edges.search(child_id, child_ni))) {
+                cout << "ids not found" << endl;
+                return 0;
+            }
+
+            parent_ni = data.deltani->versions.get_version(parent_ni, version);
+            child_ni = data.deltani->versions.get_version(child_ni, version);
+
+            if (parent_ni.lower < child_ni.lower && parent_ni.upper > child_ni.upper) {
+                cout << "id " << parent_id << " is an ancestor of id " << child_id << endl;
+                return 0;
+            }
+
+            cout << "id " << parent_id << " is NOT an ancestor of id " << child_id << endl;
+        } else {
+            cout << "unknown command '" << s << "'" << endl;
+        }
+        return 0;
+    },
+    // exit_mode
+    [] (ModeData& data) {
+        delete data.deltani;
+        return 0;
+    }
 };
