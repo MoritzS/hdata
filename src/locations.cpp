@@ -261,9 +261,19 @@ ModeInfo niModeInfo = {
     }
 };
 
+void DeltaFunction::add_range(DeltaRange const& range) {
+    ranges.insert(range.from, range);
+    ranges_inv.insert(range.to, range);
+}
+
 uint32_t DeltaFunction::evaluate(uint32_t const value) const {
     DeltaRange const& range = *ranges.search_range(value).begin();
     return value + range.to - range.from;
+}
+
+uint32_t DeltaFunction::evaluate_inv(uint32_t const value) const {
+    DeltaRange const& range = *ranges_inv.search_range(value).begin();
+    return value - range.to + range.from;
 }
 
 NIEdge DeltaFunction::apply(NIEdge const& edge) const {

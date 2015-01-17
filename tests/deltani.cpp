@@ -7,10 +7,10 @@ public:
     DeltaFunction d;
 
     virtual void SetUp() {
-        d.ranges.insert(1, {1, 1});
-        d.ranges.insert(3, {3, 5});
-        d.ranges.insert(6, {6, 3});
-        d.ranges.insert(8, {8, 8});
+        d.add_range({1, 1});
+        d.add_range({3, 5});
+        d.add_range({6, 3});
+        d.add_range({8, 8});
         d.max = 9;
     }
 };
@@ -25,6 +25,18 @@ TEST_F(DeltaFunctionTest, Evaluate) {
     EXPECT_EQ(4, d.evaluate(7));
     EXPECT_EQ(8, d.evaluate(8));
     EXPECT_EQ(9, d.evaluate(9));
+}
+
+TEST_F(DeltaFunctionTest, EvaluateInv) {
+    EXPECT_EQ(1, d.evaluate_inv(1));
+    EXPECT_EQ(2, d.evaluate_inv(2));
+    EXPECT_EQ(3, d.evaluate_inv(5));
+    EXPECT_EQ(4, d.evaluate_inv(6));
+    EXPECT_EQ(5, d.evaluate_inv(7));
+    EXPECT_EQ(6, d.evaluate_inv(3));
+    EXPECT_EQ(7, d.evaluate_inv(4));
+    EXPECT_EQ(8, d.evaluate_inv(8));
+    EXPECT_EQ(9, d.evaluate_inv(9));
 }
 
 TEST_F(DeltaFunctionTest, SimpleApply) {

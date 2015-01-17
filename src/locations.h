@@ -43,11 +43,19 @@ struct DeltaRange {
     uint32_t to;
 };
 
-struct DeltaFunction {
-    BPTree<DeltaRange, uint32_t> ranges;
+typedef BPTree<DeltaRange, uint32_t> DeltaRangeTree;
+
+class DeltaFunction {
+private:
+    DeltaRangeTree ranges;
+    DeltaRangeTree ranges_inv;
+
+public:
     uint32_t max;
 
+    void add_range(DeltaRange const& range);
     uint32_t evaluate(uint32_t const value) const;
+    uint32_t evaluate_inv(uint32_t const value) const;
     NIEdge apply(NIEdge const& edge) const;
 };
 
