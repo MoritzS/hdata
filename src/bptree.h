@@ -7,6 +7,7 @@
 #include <cstring>
 #include <iterator>
 #include <stack>
+#include <utility>
 
 #ifdef USE_BMI
 #include <immintrin.h>
@@ -534,6 +535,31 @@ public:
         values->next = nullptr;
     }
 
+    BPTree(BPTree const& other)
+    : BPTree() {
+        std::stack<BPNode*> nodes;
+        nodes.push(other.root_node);
+        while (!nodes.empty()) {
+            BPNode* node = nodes.top();
+            nodes.pop();
+            if (node->type == BP_INNER) {
+                for (size_t i=0; i <= node->num_keys; i++) {
+                    nodes.push(node->inner.pointers[i]);
+                }
+            } else {
+                for (size_t i=0; i < node->num_keys; i++) {
+                    insert(node->keys[i], ValueType(*node->leaf.values[i]));
+                }
+            }
+        }
+    }
+
+    BPTree(BPTree&& other)
+    : BPTree() {
+        std::swap(root_node, other.root_node);
+        std::swap(values, other.values);
+    }
+
     ~BPTree() {
         std::stack<BPNode*> nodes;
         nodes.push(root_node);
@@ -553,6 +579,12 @@ public:
             delete val;
             val = next;
         }
+    }
+
+    BPTree& operator =(BPTree other) {
+        std::swap(root_node, other.root_node);
+        std::swap(values, other.values);
+        return *this;
     }
 
     /*
