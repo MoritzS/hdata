@@ -62,7 +62,7 @@ AS_IF([test "$use_gtest" = "yes"],
     AX_PTHREAD([],
     [
         use_gtest="no"
-        AC_MSG_WARN(["couldn't find pthread, tests not available"])
+        AC_MSG_WARN([couldn't find pthread, tests not available])
     ])
 ])
 
@@ -73,7 +73,7 @@ AS_IF([test "$use_gtest" = "yes"],
 [
     AC_CHECK_HEADERS([gtest/gtest.h], [], [
         use_gtest="no"
-        AC_MSG_WARN(["couldn't find gtest headers, tests not available"])
+        AC_MSG_WARN([couldn't find gtest headers, tests not available])
     ])
 ])
 AS_IF([test "$use_mbmi" = "yes" -a "$cc_has_mbmi_flag" = "yes"],
