@@ -4,7 +4,7 @@
 #include <map>
 #include <stack>
 #include <sstream>
-#include <stdexcept>
+#include <utility>
 
 #include "util.h"
 
@@ -299,6 +299,23 @@ DeltaFunction DeltaFunction::merge(DeltaFunction const& delta) const {
     return new_delta;
 }
 
+DeltaVersions::DeltaVersions()
+: edges(), deltas() {
+}
+
+DeltaVersions::DeltaVersions(NIEdgeTree& edges)
+: edges(std::move(edges)) {
+    // search root (edge with e.lower == 1)
+    for (NIEdge& e : this->edges.search_range(0)) {
+        if (e.lower == 1) {
+            DeltaFunction init_version;
+            init_version.add_range({1, 1});
+            init_version.max = e.upper;
+            insert_delta(init_version);
+        }
+    }
+}
+
 NIEdge DeltaVersions::get_version(NIEdge const& edge, size_t version) const {
     if (version > max_version()) {
         version = max_version();
@@ -349,6 +366,25 @@ size_t DeltaVersions::insert_delta(DeltaFunction const& delta) {
     }
 }
 
+bool DeltaVersions::is_ancestor(uint32_t const parent_id, uint32_t child_id) {
+    return is_ancestor(parent_id, child_id, max_version());
+}
+
+bool DeltaVersions::is_ancestor(uint32_t const parent_id, uint32_t child_id, uint32_t version) {
+    NIEdge parent_edge;
+    NIEdge child_edge;
+    if (!edges.search(parent_id, parent_edge)) {
+        throw new deltani_invalid_id(parent_id);
+    }
+    if (!edges.search(child_id, child_edge)) {
+        throw new deltani_invalid_id(child_id);
+    }
+    parent_edge = get_version(parent_edge, version);
+    child_edge = get_version(child_edge, version);
+    return parent_edge.lower < child_edge.lower && parent_edge.upper > child_edge.upper;
+}
+
+
 ModeInfo deltaniModeInfo = {
     // init_mode
     [] (std::ifstream& file, ModeData& data) {
@@ -356,22 +392,11 @@ ModeInfo deltaniModeInfo = {
         data.deltani = new DeltaniModeData();
         cout << "reading ni edges... ";
         cout.flush();
-        cout << "got " << read_ni_edges(file, data.ni->edges) << endl;
+        NIEdgeTree edges;
+        cout << "got " << read_ni_edges(file, edges) << endl;
         cout << "generating initial version... ";
         cout.flush();
-        // search root (edge with e.lower == 1)
-        for (NIEdge& e : data.deltani->edges.search_range(0)) {
-            if (e.lower == 1) {
-                DeltaFunction init_version;
-                init_version.add_range({1, 1});
-                init_version.max = e.upper;
-                data.deltani->versions.insert_delta(init_version);
-                goto found_version;
-            }
-        }
-        cout << "root of tree not found" << endl;
-        return 1;
-found_version:
+        data.deltani->versions = DeltaVersions(edges);
         cout << "done" << endl;
         return 0;
     },
@@ -393,23 +418,17 @@ found_version:
                 cout << "invalid ids" << endl;
                 return 0;
             }
-            NIEdge parent_ni;
-            NIEdge child_ni;
-            if (!(data.deltani->edges.search(parent_id, parent_ni) &&
-                data.deltani->edges.search(child_id, child_ni))) {
-                cout << "ids not found" << endl;
-                return 0;
+            try {
+                if (data.deltani->versions.is_ancestor(parent_id, child_id, version)) {
+                    cout << "id " << parent_id << " is an ancestor of id " << child_id << endl;
+                } else {
+                    cout << "id " << parent_id << " is NOT an ancestor of id " << child_id << endl;
+                }
+            } catch (deltani_invalid_id& e) {
+                cout << "id " << e.id << " not found" << endl;
             }
+            return 0;
 
-            parent_ni = data.deltani->versions.get_version(parent_ni, version);
-            child_ni = data.deltani->versions.get_version(child_ni, version);
-
-            if (parent_ni.lower < child_ni.lower && parent_ni.upper > child_ni.upper) {
-                cout << "id " << parent_id << " is an ancestor of id " << child_id << endl;
-                return 0;
-            }
-
-            cout << "id " << parent_id << " is NOT an ancestor of id " << child_id << endl;
         } else {
             cout << "unknown command '" << s << "'" << endl;
         }

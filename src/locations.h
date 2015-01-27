@@ -2,6 +2,7 @@
 #define _LOCATIONS_H
 
 #include <cstdint>
+#include <exception>
 #include <fstream>
 #include <string>
 #include <vector>
@@ -61,21 +62,49 @@ public:
     DeltaFunction merge(DeltaFunction const& delta) const;
 };
 
+class deltani_error
+: public std::exception {
+public:
+    virtual const char* what() const noexcept {
+        return "deltani error";
+    }
+};
+
+class deltani_invalid_id
+: public deltani_error {
+public:
+    uint32_t const id;
+
+    deltani_invalid_id(uint32_t const id)
+    : id(id) {
+    }
+
+    virtual const char* what() const noexcept {
+        return "deltani: invalid id";
+    }
+};
+
 class DeltaVersions {
 private:
+    NIEdgeTree edges;
     std::vector<std::vector<DeltaFunction>> deltas;
 
 public:
+    DeltaVersions();
+    DeltaVersions(NIEdgeTree& edges);
+
     inline size_t max_version() const {
         return deltas[0].size();
     }
 
     NIEdge get_version(NIEdge const& edge, size_t version) const;
     size_t insert_delta(DeltaFunction const& delta);
+
+    bool is_ancestor(uint32_t const parent_id, uint32_t child_id);
+    bool is_ancestor(uint32_t const parent_id, uint32_t child_id, uint32_t version);
 };
 
 struct DeltaniModeData{
-    NIEdgeTree edges;
     DeltaVersions versions;
 };
 
