@@ -86,6 +86,7 @@ public:
 
 class DeltaVersions {
 private:
+    uint32_t init_max;
     NIEdgeTree edges;
     std::vector<std::vector<DeltaFunction>> deltas;
 

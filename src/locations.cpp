@@ -300,7 +300,7 @@ DeltaFunction DeltaFunction::merge(DeltaFunction const& delta) const {
 }
 
 DeltaVersions::DeltaVersions()
-: edges(), deltas() {
+: init_max(0), edges(), deltas() {
 }
 
 DeltaVersions::DeltaVersions(NIEdgeTree& edges)
@@ -308,10 +308,7 @@ DeltaVersions::DeltaVersions(NIEdgeTree& edges)
     // search root (edge with e.lower == 1)
     for (NIEdge& e : this->edges.search_range(0)) {
         if (e.lower == 1) {
-            DeltaFunction init_version;
-            init_version.add_range({1, 1});
-            init_version.max = e.upper;
-            insert_delta(init_version);
+            init_max = e.upper + 1;
         }
     }
 }
