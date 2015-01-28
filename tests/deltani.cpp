@@ -100,7 +100,7 @@ public:
         edges.insert(4, {4, 2, 5});
         edges.insert(5, {5, 9, 10});
         edges.insert(6, {6, 11, 12});
-        versions = DeltaVersions(edges);
+        versions = DeltaVersions(edges, 9);
 
         DeltaFunction v1;
         v1.add_range({1, 1});

@@ -93,6 +93,7 @@ private:
 public:
     DeltaVersions();
     DeltaVersions(NIEdgeTree& edges);
+    DeltaVersions(NIEdgeTree& edges, uint32_t const max);
 
     inline size_t max_version() const {
         return deltas[0].size();

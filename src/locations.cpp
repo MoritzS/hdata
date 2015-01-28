@@ -300,7 +300,7 @@ DeltaFunction DeltaFunction::merge(DeltaFunction const& delta) const {
 }
 
 DeltaVersions::DeltaVersions()
-: init_max(0), edges(), deltas() {
+: init_max(0) {
 }
 
 DeltaVersions::DeltaVersions(NIEdgeTree& edges)
@@ -311,6 +311,10 @@ DeltaVersions::DeltaVersions(NIEdgeTree& edges)
             init_max = e.upper + 1;
         }
     }
+}
+
+DeltaVersions::DeltaVersions(NIEdgeTree& edges, uint32_t const max)
+: init_max(max), edges(std::move(edges)) {
 }
 
 NIEdge DeltaVersions::get_version(NIEdge const& edge, size_t version) const {
