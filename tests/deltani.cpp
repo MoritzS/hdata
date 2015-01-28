@@ -93,6 +93,15 @@ public:
     DeltaVersions versions;
 
     virtual void SetUp() {
+        NIEdgeTree edges;
+        edges.insert(1, {1, 1, 8});
+        edges.insert(2, {2, 3, 4});
+        edges.insert(3, {3, 6, 7});
+        edges.insert(4, {4, 2, 5});
+        edges.insert(5, {5, 9, 10});
+        edges.insert(6, {6, 11, 12});
+        versions = DeltaVersions(edges);
+
         DeltaFunction v1;
         v1.add_range({1, 1});
         v1.add_range({5, 7});
@@ -297,4 +306,206 @@ TEST_F(DeltaVersionsTest, MultipleStep) {
     EXPECT_EQ(123, e.loc_id);
     EXPECT_EQ(11, e.lower);
     EXPECT_EQ(12, e.upper);
+}
+
+TEST_F(DeltaVersionsTest, IsAncestor) {
+    EXPECT_TRUE(versions.is_ancestor(1, 4, 0));
+    EXPECT_TRUE(versions.is_ancestor(1, 3, 0));
+    EXPECT_TRUE(versions.is_ancestor(1, 2, 0));
+    EXPECT_TRUE(versions.is_ancestor(4, 2, 0));
+
+    EXPECT_TRUE(versions.is_ancestor(1, 4, 1));
+    EXPECT_TRUE(versions.is_ancestor(1, 2, 1));
+    EXPECT_TRUE(versions.is_ancestor(1, 3, 1));
+    EXPECT_TRUE(versions.is_ancestor(4, 2, 1));
+    EXPECT_TRUE(versions.is_ancestor(4, 3, 1));
+
+    EXPECT_TRUE(versions.is_ancestor(1, 4, 2));
+    EXPECT_TRUE(versions.is_ancestor(1, 3, 2));
+    EXPECT_TRUE(versions.is_ancestor(4, 3, 2));
+
+    EXPECT_TRUE(versions.is_ancestor(1, 5, 3));
+    EXPECT_TRUE(versions.is_ancestor(1, 4, 3));
+    EXPECT_TRUE(versions.is_ancestor(1, 3, 3));
+    EXPECT_TRUE(versions.is_ancestor(4, 3, 3));
+
+    EXPECT_TRUE(versions.is_ancestor(1, 6, 4));
+    EXPECT_TRUE(versions.is_ancestor(1, 4, 4));
+    EXPECT_TRUE(versions.is_ancestor(1, 5, 4));
+    EXPECT_TRUE(versions.is_ancestor(1, 3, 4));
+    EXPECT_TRUE(versions.is_ancestor(6, 5, 4));
+    EXPECT_TRUE(versions.is_ancestor(4, 3, 4));
+
+    // implicit max version
+    EXPECT_TRUE(versions.is_ancestor(1, 6));
+    EXPECT_TRUE(versions.is_ancestor(1, 4));
+    EXPECT_TRUE(versions.is_ancestor(1, 5));
+    EXPECT_TRUE(versions.is_ancestor(1, 3));
+    EXPECT_TRUE(versions.is_ancestor(6, 5));
+    EXPECT_TRUE(versions.is_ancestor(4, 3));
+}
+
+TEST_F(DeltaVersionsTest, NotIsAncestor) {
+    EXPECT_FALSE(versions.is_ancestor(1, 1, 0));
+    EXPECT_FALSE(versions.is_ancestor(1, 5, 0));
+    EXPECT_FALSE(versions.is_ancestor(1, 6, 0));
+    EXPECT_FALSE(versions.is_ancestor(2, 1, 0));
+    EXPECT_FALSE(versions.is_ancestor(2, 2, 0));
+    EXPECT_FALSE(versions.is_ancestor(2, 3, 0));
+    EXPECT_FALSE(versions.is_ancestor(2, 4, 0));
+    EXPECT_FALSE(versions.is_ancestor(2, 5, 0));
+    EXPECT_FALSE(versions.is_ancestor(2, 6, 0));
+    EXPECT_FALSE(versions.is_ancestor(3, 1, 0));
+    EXPECT_FALSE(versions.is_ancestor(3, 2, 0));
+    EXPECT_FALSE(versions.is_ancestor(3, 3, 0));
+    EXPECT_FALSE(versions.is_ancestor(3, 4, 0));
+    EXPECT_FALSE(versions.is_ancestor(3, 5, 0));
+    EXPECT_FALSE(versions.is_ancestor(3, 6, 0));
+    EXPECT_FALSE(versions.is_ancestor(4, 1, 0));
+    EXPECT_FALSE(versions.is_ancestor(4, 3, 0));
+    EXPECT_FALSE(versions.is_ancestor(4, 4, 0));
+    EXPECT_FALSE(versions.is_ancestor(4, 5, 0));
+    EXPECT_FALSE(versions.is_ancestor(4, 6, 0));
+    EXPECT_FALSE(versions.is_ancestor(5, 1, 0));
+    EXPECT_FALSE(versions.is_ancestor(5, 2, 0));
+    EXPECT_FALSE(versions.is_ancestor(5, 3, 0));
+    EXPECT_FALSE(versions.is_ancestor(5, 4, 0));
+    EXPECT_FALSE(versions.is_ancestor(5, 5, 0));
+    EXPECT_FALSE(versions.is_ancestor(5, 6, 0));
+    EXPECT_FALSE(versions.is_ancestor(6, 1, 0));
+    EXPECT_FALSE(versions.is_ancestor(6, 2, 0));
+    EXPECT_FALSE(versions.is_ancestor(6, 3, 0));
+    EXPECT_FALSE(versions.is_ancestor(6, 4, 0));
+    EXPECT_FALSE(versions.is_ancestor(6, 5, 0));
+    EXPECT_FALSE(versions.is_ancestor(6, 6, 0));
+
+    EXPECT_FALSE(versions.is_ancestor(1, 1, 1));
+    EXPECT_FALSE(versions.is_ancestor(1, 5, 1));
+    EXPECT_FALSE(versions.is_ancestor(1, 6, 1));
+    EXPECT_FALSE(versions.is_ancestor(2, 1, 1));
+    EXPECT_FALSE(versions.is_ancestor(2, 2, 1));
+    EXPECT_FALSE(versions.is_ancestor(2, 3, 1));
+    EXPECT_FALSE(versions.is_ancestor(2, 4, 1));
+    EXPECT_FALSE(versions.is_ancestor(2, 5, 1));
+    EXPECT_FALSE(versions.is_ancestor(2, 6, 1));
+    EXPECT_FALSE(versions.is_ancestor(3, 1, 1));
+    EXPECT_FALSE(versions.is_ancestor(3, 2, 1));
+    EXPECT_FALSE(versions.is_ancestor(3, 3, 1));
+    EXPECT_FALSE(versions.is_ancestor(3, 4, 1));
+    EXPECT_FALSE(versions.is_ancestor(3, 5, 1));
+    EXPECT_FALSE(versions.is_ancestor(3, 6, 1));
+    EXPECT_FALSE(versions.is_ancestor(4, 1, 1));
+    EXPECT_FALSE(versions.is_ancestor(4, 4, 1));
+    EXPECT_FALSE(versions.is_ancestor(4, 5, 1));
+    EXPECT_FALSE(versions.is_ancestor(4, 6, 1));
+    EXPECT_FALSE(versions.is_ancestor(5, 1, 1));
+    EXPECT_FALSE(versions.is_ancestor(5, 2, 1));
+    EXPECT_FALSE(versions.is_ancestor(5, 3, 1));
+    EXPECT_FALSE(versions.is_ancestor(5, 4, 1));
+    EXPECT_FALSE(versions.is_ancestor(5, 5, 1));
+    EXPECT_FALSE(versions.is_ancestor(5, 6, 1));
+    EXPECT_FALSE(versions.is_ancestor(6, 1, 1));
+    EXPECT_FALSE(versions.is_ancestor(6, 2, 1));
+    EXPECT_FALSE(versions.is_ancestor(6, 3, 1));
+    EXPECT_FALSE(versions.is_ancestor(6, 4, 1));
+    EXPECT_FALSE(versions.is_ancestor(6, 5, 1));
+    EXPECT_FALSE(versions.is_ancestor(6, 6, 1));
+
+    EXPECT_FALSE(versions.is_ancestor(1, 1, 2));
+    EXPECT_FALSE(versions.is_ancestor(1, 2, 2));
+    EXPECT_FALSE(versions.is_ancestor(1, 5, 2));
+    EXPECT_FALSE(versions.is_ancestor(1, 6, 2));
+    EXPECT_FALSE(versions.is_ancestor(2, 1, 2));
+    EXPECT_FALSE(versions.is_ancestor(2, 2, 2));
+    EXPECT_FALSE(versions.is_ancestor(2, 3, 2));
+    EXPECT_FALSE(versions.is_ancestor(2, 4, 2));
+    EXPECT_FALSE(versions.is_ancestor(2, 5, 2));
+    EXPECT_FALSE(versions.is_ancestor(2, 6, 2));
+    EXPECT_FALSE(versions.is_ancestor(3, 1, 2));
+    EXPECT_FALSE(versions.is_ancestor(3, 2, 2));
+    EXPECT_FALSE(versions.is_ancestor(3, 3, 2));
+    EXPECT_FALSE(versions.is_ancestor(3, 4, 2));
+    EXPECT_FALSE(versions.is_ancestor(3, 5, 2));
+    EXPECT_FALSE(versions.is_ancestor(3, 6, 2));
+    EXPECT_FALSE(versions.is_ancestor(4, 1, 2));
+    EXPECT_FALSE(versions.is_ancestor(4, 2, 2));
+    EXPECT_FALSE(versions.is_ancestor(4, 4, 2));
+    EXPECT_FALSE(versions.is_ancestor(4, 5, 2));
+    EXPECT_FALSE(versions.is_ancestor(4, 6, 2));
+    EXPECT_FALSE(versions.is_ancestor(5, 1, 2));
+    EXPECT_FALSE(versions.is_ancestor(5, 2, 2));
+    EXPECT_FALSE(versions.is_ancestor(5, 3, 2));
+    EXPECT_FALSE(versions.is_ancestor(5, 4, 2));
+    EXPECT_FALSE(versions.is_ancestor(5, 5, 2));
+    EXPECT_FALSE(versions.is_ancestor(5, 6, 2));
+    EXPECT_FALSE(versions.is_ancestor(6, 1, 2));
+    EXPECT_FALSE(versions.is_ancestor(6, 2, 2));
+    EXPECT_FALSE(versions.is_ancestor(6, 3, 2));
+    EXPECT_FALSE(versions.is_ancestor(6, 4, 2));
+    EXPECT_FALSE(versions.is_ancestor(6, 5, 2));
+    EXPECT_FALSE(versions.is_ancestor(6, 6, 2));
+
+    EXPECT_FALSE(versions.is_ancestor(1, 1, 3));
+    EXPECT_FALSE(versions.is_ancestor(1, 2, 3));
+    EXPECT_FALSE(versions.is_ancestor(1, 6, 3));
+    EXPECT_FALSE(versions.is_ancestor(2, 1, 3));
+    EXPECT_FALSE(versions.is_ancestor(2, 2, 3));
+    EXPECT_FALSE(versions.is_ancestor(2, 3, 3));
+    EXPECT_FALSE(versions.is_ancestor(2, 4, 3));
+    EXPECT_FALSE(versions.is_ancestor(2, 5, 3));
+    EXPECT_FALSE(versions.is_ancestor(2, 6, 3));
+    EXPECT_FALSE(versions.is_ancestor(3, 1, 3));
+    EXPECT_FALSE(versions.is_ancestor(3, 2, 3));
+    EXPECT_FALSE(versions.is_ancestor(3, 3, 3));
+    EXPECT_FALSE(versions.is_ancestor(3, 4, 3));
+    EXPECT_FALSE(versions.is_ancestor(3, 5, 3));
+    EXPECT_FALSE(versions.is_ancestor(3, 6, 3));
+    EXPECT_FALSE(versions.is_ancestor(4, 1, 3));
+    EXPECT_FALSE(versions.is_ancestor(4, 2, 3));
+    EXPECT_FALSE(versions.is_ancestor(4, 4, 3));
+    EXPECT_FALSE(versions.is_ancestor(4, 5, 3));
+    EXPECT_FALSE(versions.is_ancestor(4, 6, 3));
+    EXPECT_FALSE(versions.is_ancestor(5, 1, 3));
+    EXPECT_FALSE(versions.is_ancestor(5, 2, 3));
+    EXPECT_FALSE(versions.is_ancestor(5, 3, 3));
+    EXPECT_FALSE(versions.is_ancestor(5, 4, 3));
+    EXPECT_FALSE(versions.is_ancestor(5, 5, 3));
+    EXPECT_FALSE(versions.is_ancestor(5, 6, 3));
+    EXPECT_FALSE(versions.is_ancestor(6, 1, 3));
+    EXPECT_FALSE(versions.is_ancestor(6, 2, 3));
+    EXPECT_FALSE(versions.is_ancestor(6, 3, 3));
+    EXPECT_FALSE(versions.is_ancestor(6, 4, 3));
+    EXPECT_FALSE(versions.is_ancestor(6, 5, 3));
+    EXPECT_FALSE(versions.is_ancestor(6, 6, 3));
+
+    EXPECT_FALSE(versions.is_ancestor(1, 1, 4));
+    EXPECT_FALSE(versions.is_ancestor(1, 2, 4));
+    EXPECT_FALSE(versions.is_ancestor(2, 1, 4));
+    EXPECT_FALSE(versions.is_ancestor(2, 2, 4));
+    EXPECT_FALSE(versions.is_ancestor(2, 3, 4));
+    EXPECT_FALSE(versions.is_ancestor(2, 4, 4));
+    EXPECT_FALSE(versions.is_ancestor(2, 5, 4));
+    EXPECT_FALSE(versions.is_ancestor(2, 6, 4));
+    EXPECT_FALSE(versions.is_ancestor(3, 1, 4));
+    EXPECT_FALSE(versions.is_ancestor(3, 2, 4));
+    EXPECT_FALSE(versions.is_ancestor(3, 3, 4));
+    EXPECT_FALSE(versions.is_ancestor(3, 4, 4));
+    EXPECT_FALSE(versions.is_ancestor(3, 5, 4));
+    EXPECT_FALSE(versions.is_ancestor(3, 6, 4));
+    EXPECT_FALSE(versions.is_ancestor(4, 1, 4));
+    EXPECT_FALSE(versions.is_ancestor(4, 2, 4));
+    EXPECT_FALSE(versions.is_ancestor(4, 4, 4));
+    EXPECT_FALSE(versions.is_ancestor(4, 5, 4));
+    EXPECT_FALSE(versions.is_ancestor(4, 6, 4));
+    EXPECT_FALSE(versions.is_ancestor(5, 1, 4));
+    EXPECT_FALSE(versions.is_ancestor(5, 2, 4));
+    EXPECT_FALSE(versions.is_ancestor(5, 3, 4));
+    EXPECT_FALSE(versions.is_ancestor(5, 4, 4));
+    EXPECT_FALSE(versions.is_ancestor(5, 5, 4));
+    EXPECT_FALSE(versions.is_ancestor(5, 6, 4));
+    EXPECT_FALSE(versions.is_ancestor(6, 1, 4));
+    EXPECT_FALSE(versions.is_ancestor(6, 2, 4));
+    EXPECT_FALSE(versions.is_ancestor(6, 3, 4));
+    EXPECT_FALSE(versions.is_ancestor(6, 4, 4));
+    EXPECT_FALSE(versions.is_ancestor(6, 6, 4));
 }
