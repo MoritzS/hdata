@@ -335,7 +335,7 @@ DeltaVersions::DeltaVersions(NIEdgeTree& edges, uint32_t const max)
 : init_max(max), edges(std::move(edges)) {
 }
 
-NIEdge DeltaVersions::get_edge(NIEdge const& edge, size_t const version) const {
+NIEdge DeltaVersions::get_edge(NIEdge const& edge, size_t const version, bool const use_wip) const {
     size_t v;
     if (version > max_version()) {
         v = max_version();
@@ -365,7 +365,20 @@ NIEdge DeltaVersions::get_edge(NIEdge const& edge, size_t const version) const {
             }
         }
     };
+
+    if (use_wip) {
+        new_edge = wip_delta.apply(new_edge);
+    }
+
     return new_edge;
+}
+
+NIEdge DeltaVersions::get_edge(NIEdge const& edge) const {
+    return get_edge(edge, max_version(), true);
+}
+
+NIEdge DeltaVersions::get_edge(NIEdge const& edge, size_t const version) const {
+    return get_edge(edge, version, false);
 }
 
 size_t DeltaVersions::insert_delta(DeltaFunction const& delta) {
@@ -388,7 +401,7 @@ size_t DeltaVersions::insert_delta(DeltaFunction const& delta) {
     }
 }
 
-bool DeltaVersions::exists(uint32_t const id, size_t version) {
+bool DeltaVersions::exists(uint32_t const id, size_t const version, bool const use_wip) const {
     NIEdge edge;
     if (!edges.search(id, edge)) {
         return false;
@@ -396,16 +409,24 @@ bool DeltaVersions::exists(uint32_t const id, size_t version) {
     if (version == 0) {
         return edge.lower < init_max;
     } else {
-        edge = get_edge(edge, version);
-        return edge.lower < deltas[0][version - 1].max;
+        edge = get_edge(edge, version, use_wip);
+        if (use_wip && !wip_delta.empty()) {
+            return edge.lower < wip_delta.max;
+        } else {
+            return edge.lower < deltas[0][version - 1].max;
+        }
     }
 }
 
-bool DeltaVersions::is_ancestor(uint32_t const parent_id, uint32_t const child_id) {
-    return is_ancestor(parent_id, child_id, max_version());
+bool DeltaVersions::exists(uint32_t const id) const {
+    return exists(id, max_version(), true);
 }
 
-bool DeltaVersions::is_ancestor(uint32_t const parent_id, uint32_t const child_id, size_t const version) {
+bool DeltaVersions::exists(uint32_t const id, size_t const version) const {
+    return exists(id, version, false);
+}
+
+bool DeltaVersions::is_ancestor(uint32_t const parent_id, uint32_t const child_id, size_t const version, bool const use_wip) const {
     NIEdge parent_edge;
     NIEdge child_edge;
     if (!edges.search(parent_id, parent_edge)) {
@@ -414,9 +435,17 @@ bool DeltaVersions::is_ancestor(uint32_t const parent_id, uint32_t const child_i
     if (!edges.search(child_id, child_edge)) {
         throw new deltani_invalid_id(child_id);
     }
-    parent_edge = get_edge(parent_edge, version);
-    child_edge = get_edge(child_edge, version);
+    parent_edge = get_edge(parent_edge, version, use_wip);
+    child_edge = get_edge(child_edge, version, use_wip);
     return parent_edge.lower < child_edge.lower && parent_edge.upper > child_edge.upper;
+}
+
+bool DeltaVersions::is_ancestor(uint32_t const parent_id, uint32_t const child_id) const {
+    return is_ancestor(parent_id, child_id, max_version(), true);
+}
+
+bool DeltaVersions::is_ancestor(uint32_t const parent_id, uint32_t const child_id, size_t const version) const {
+    return is_ancestor(parent_id, child_id, version, false);
 }
 
 

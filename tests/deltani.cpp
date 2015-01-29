@@ -363,6 +363,14 @@ TEST_F(DeltaVersionsTest, Exists) {
     EXPECT_TRUE(versions.exists(4, 4));
     EXPECT_TRUE(versions.exists(5, 4));
     EXPECT_TRUE(versions.exists(6, 4));
+
+    // Implicit Version 4
+    EXPECT_TRUE(versions.exists(1));
+    EXPECT_FALSE(versions.exists(2));
+    EXPECT_TRUE(versions.exists(3));
+    EXPECT_TRUE(versions.exists(4));
+    EXPECT_TRUE(versions.exists(5));
+    EXPECT_TRUE(versions.exists(6));
 }
 
 TEST_F(DeltaVersionsTest, IsAncestor) {
