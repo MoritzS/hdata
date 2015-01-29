@@ -330,7 +330,7 @@ DeltaVersions::DeltaVersions(NIEdgeTree& edges, uint32_t const max)
 : init_max(max), edges(std::move(edges)) {
 }
 
-NIEdge DeltaVersions::get_version(NIEdge const& edge, size_t const version) const {
+NIEdge DeltaVersions::get_edge(NIEdge const& edge, size_t const version) const {
     size_t v;
     if (version > max_version()) {
         v = max_version();
@@ -391,7 +391,7 @@ bool DeltaVersions::exists(uint32_t const id, size_t version) {
     if (version == 0) {
         return edge.lower < init_max;
     } else {
-        edge = get_version(edge, version);
+        edge = get_edge(edge, version);
         return edge.lower < deltas[0][version - 1].max;
     }
 }
@@ -409,8 +409,8 @@ bool DeltaVersions::is_ancestor(uint32_t const parent_id, uint32_t const child_i
     if (!edges.search(child_id, child_edge)) {
         throw new deltani_invalid_id(child_id);
     }
-    parent_edge = get_version(parent_edge, version);
-    child_edge = get_version(child_edge, version);
+    parent_edge = get_edge(parent_edge, version);
+    child_edge = get_edge(child_edge, version);
     return parent_edge.lower < child_edge.lower && parent_edge.upper > child_edge.upper;
 }
 

@@ -99,7 +99,7 @@ public:
         return deltas[0].size();
     }
 
-    NIEdge get_version(NIEdge const& edge, size_t const version) const;
+    NIEdge get_edge(NIEdge const& edge, size_t const version) const;
     size_t insert_delta(DeltaFunction const& delta);
 
     bool exists(uint32_t const id, size_t version);

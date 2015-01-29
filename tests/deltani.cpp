@@ -161,32 +161,32 @@ TEST_F(DeltaVersionsTest, MaxVersion) {
 TEST_F(DeltaVersionsTest, NullVersion) {
     NIEdge e;
 
-    e = versions.get_version({123, 1, 8}, 0);
+    e = versions.get_edge({123, 1, 8}, 0);
     EXPECT_EQ(123, e.loc_id);
     EXPECT_EQ(1, e.lower);
     EXPECT_EQ(8, e.upper);
 
-    e = versions.get_version({123, 2, 5}, 0);
+    e = versions.get_edge({123, 2, 5}, 0);
     EXPECT_EQ(123, e.loc_id);
     EXPECT_EQ(2, e.lower);
     EXPECT_EQ(5, e.upper);
 
-    e = versions.get_version({123, 3, 4}, 0);
+    e = versions.get_edge({123, 3, 4}, 0);
     EXPECT_EQ(123, e.loc_id);
     EXPECT_EQ(3, e.lower);
     EXPECT_EQ(4, e.upper);
 
-    e = versions.get_version({123, 6, 7}, 0);
+    e = versions.get_edge({123, 6, 7}, 0);
     EXPECT_EQ(123, e.loc_id);
     EXPECT_EQ(6, e.lower);
     EXPECT_EQ(7, e.upper);
 
-    e = versions.get_version({123, 9, 10}, 0);
+    e = versions.get_edge({123, 9, 10}, 0);
     EXPECT_EQ(123, e.loc_id);
     EXPECT_EQ(9, e.lower);
     EXPECT_EQ(10, e.upper);
 
-    e = versions.get_version({123, 11, 12}, 0);
+    e = versions.get_edge({123, 11, 12}, 0);
     EXPECT_EQ(123, e.loc_id);
     EXPECT_EQ(11, e.lower);
     EXPECT_EQ(12, e.upper);
@@ -196,94 +196,94 @@ TEST_F(DeltaVersionsTest, SingleStep) {
     NIEdge e;
 
     // Version 1
-    e = versions.get_version({123, 1, 8}, 1);
+    e = versions.get_edge({123, 1, 8}, 1);
     EXPECT_EQ(123, e.loc_id);
     EXPECT_EQ(1, e.lower);
     EXPECT_EQ(8, e.upper);
 
-    e = versions.get_version({123, 2, 5}, 1);
+    e = versions.get_edge({123, 2, 5}, 1);
     EXPECT_EQ(123, e.loc_id);
     EXPECT_EQ(2, e.lower);
     EXPECT_EQ(7, e.upper);
 
-    e = versions.get_version({123, 3, 4}, 1);
+    e = versions.get_edge({123, 3, 4}, 1);
     EXPECT_EQ(123, e.loc_id);
     EXPECT_EQ(3, e.lower);
     EXPECT_EQ(4, e.upper);
 
-    e = versions.get_version({123, 6, 7}, 1);
+    e = versions.get_edge({123, 6, 7}, 1);
     EXPECT_EQ(123, e.loc_id);
     EXPECT_EQ(5, e.lower);
     EXPECT_EQ(6, e.upper);
 
-    e = versions.get_version({123, 9, 10}, 1);
+    e = versions.get_edge({123, 9, 10}, 1);
     EXPECT_EQ(123, e.loc_id);
     EXPECT_EQ(9, e.lower);
     EXPECT_EQ(10, e.upper);
 
-    e = versions.get_version({123, 11, 12}, 1);
+    e = versions.get_edge({123, 11, 12}, 1);
     EXPECT_EQ(123, e.loc_id);
     EXPECT_EQ(11, e.lower);
     EXPECT_EQ(12, e.upper);
 
     // Version 2
-    e = versions.get_version({123, 1, 8}, 2);
+    e = versions.get_edge({123, 1, 8}, 2);
     EXPECT_EQ(123, e.loc_id);
     EXPECT_EQ(1, e.lower);
     EXPECT_EQ(6, e.upper);
 
-    e = versions.get_version({123, 2, 5}, 2);
+    e = versions.get_edge({123, 2, 5}, 2);
     EXPECT_EQ(123, e.loc_id);
     EXPECT_EQ(2, e.lower);
     EXPECT_EQ(5, e.upper);
 
-    e = versions.get_version({123, 3, 4}, 2);
+    e = versions.get_edge({123, 3, 4}, 2);
     EXPECT_EQ(123, e.loc_id);
     EXPECT_EQ(7, e.lower);
     EXPECT_EQ(8, e.upper);
 
-    e = versions.get_version({123, 6, 7}, 2);
+    e = versions.get_edge({123, 6, 7}, 2);
     EXPECT_EQ(123, e.loc_id);
     EXPECT_EQ(3, e.lower);
     EXPECT_EQ(4, e.upper);
 
-    e = versions.get_version({123, 9, 10}, 2);
+    e = versions.get_edge({123, 9, 10}, 2);
     EXPECT_EQ(123, e.loc_id);
     EXPECT_EQ(9, e.lower);
     EXPECT_EQ(10, e.upper);
 
-    e = versions.get_version({123, 11, 12}, 2);
+    e = versions.get_edge({123, 11, 12}, 2);
     EXPECT_EQ(123, e.loc_id);
     EXPECT_EQ(11, e.lower);
     EXPECT_EQ(12, e.upper);
 
     // Version 4
-    e = versions.get_version({123, 1, 8}, 4);
+    e = versions.get_edge({123, 1, 8}, 4);
     EXPECT_EQ(123, e.loc_id);
     EXPECT_EQ(1, e.lower);
     EXPECT_EQ(10, e.upper);
 
-    e = versions.get_version({123, 2, 5}, 4);
+    e = versions.get_edge({123, 2, 5}, 4);
     EXPECT_EQ(123, e.loc_id);
     EXPECT_EQ(6, e.lower);
     EXPECT_EQ(9, e.upper);
 
-    e = versions.get_version({123, 3, 4}, 4);
+    e = versions.get_edge({123, 3, 4}, 4);
     EXPECT_EQ(123, e.loc_id);
     EXPECT_EQ(11, e.lower);
     EXPECT_EQ(12, e.upper);
 
-    e = versions.get_version({123, 6, 7}, 4);
+    e = versions.get_edge({123, 6, 7}, 4);
     EXPECT_EQ(123, e.loc_id);
     EXPECT_EQ(7, e.lower);
     EXPECT_EQ(8, e.upper);
 
-    e = versions.get_version({123, 9, 10}, 4);
+    e = versions.get_edge({123, 9, 10}, 4);
     EXPECT_EQ(123, e.loc_id);
     EXPECT_EQ(3, e.lower);
     EXPECT_EQ(4, e.upper);
 
-    e = versions.get_version({123, 11, 12}, 4);
+    e = versions.get_edge({123, 11, 12}, 4);
     EXPECT_EQ(123, e.loc_id);
     EXPECT_EQ(2, e.lower);
     EXPECT_EQ(5, e.upper);
@@ -292,32 +292,32 @@ TEST_F(DeltaVersionsTest, SingleStep) {
 TEST_F(DeltaVersionsTest, MultipleStep) {
     NIEdge e;
 
-    e = versions.get_version({123, 1, 8}, 3);
+    e = versions.get_edge({123, 1, 8}, 3);
     EXPECT_EQ(123, e.loc_id);
     EXPECT_EQ(1, e.lower);
     EXPECT_EQ(8, e.upper);
 
-    e = versions.get_version({123, 2, 5}, 3);
+    e = versions.get_edge({123, 2, 5}, 3);
     EXPECT_EQ(123, e.loc_id);
     EXPECT_EQ(4, e.lower);
     EXPECT_EQ(7, e.upper);
 
-    e = versions.get_version({123, 3, 4}, 3);
+    e = versions.get_edge({123, 3, 4}, 3);
     EXPECT_EQ(123, e.loc_id);
     EXPECT_EQ(9, e.lower);
     EXPECT_EQ(10, e.upper);
 
-    e = versions.get_version({123, 6, 7}, 3);
+    e = versions.get_edge({123, 6, 7}, 3);
     EXPECT_EQ(123, e.loc_id);
     EXPECT_EQ(5, e.lower);
     EXPECT_EQ(6, e.upper);
 
-    e = versions.get_version({123, 9, 10}, 3);
+    e = versions.get_edge({123, 9, 10}, 3);
     EXPECT_EQ(123, e.loc_id);
     EXPECT_EQ(2, e.lower);
     EXPECT_EQ(3, e.upper);
 
-    e = versions.get_version({123, 11, 12}, 3);
+    e = versions.get_edge({123, 11, 12}, 3);
     EXPECT_EQ(123, e.loc_id);
     EXPECT_EQ(11, e.lower);
     EXPECT_EQ(12, e.upper);
