@@ -102,6 +102,7 @@ public:
     NIEdge get_version(NIEdge const& edge, size_t const version) const;
     size_t insert_delta(DeltaFunction const& delta);
 
+    bool exists(uint32_t const id, size_t version);
     bool is_ancestor(uint32_t const parent_id, uint32_t const child_id);
     bool is_ancestor(uint32_t const parent_id, uint32_t const child_id, size_t const version);
 };

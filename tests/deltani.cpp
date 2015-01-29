@@ -323,6 +323,48 @@ TEST_F(DeltaVersionsTest, MultipleStep) {
     EXPECT_EQ(12, e.upper);
 }
 
+TEST_F(DeltaVersionsTest, Exists) {
+    // Version 0
+    EXPECT_TRUE(versions.exists(1, 0));
+    EXPECT_TRUE(versions.exists(2, 0));
+    EXPECT_TRUE(versions.exists(3, 0));
+    EXPECT_TRUE(versions.exists(4, 0));
+    EXPECT_FALSE(versions.exists(5, 0));
+    EXPECT_FALSE(versions.exists(6, 0));
+
+    // Version 1
+    EXPECT_TRUE(versions.exists(1, 1));
+    EXPECT_TRUE(versions.exists(2, 1));
+    EXPECT_TRUE(versions.exists(3, 1));
+    EXPECT_TRUE(versions.exists(4, 1));
+    EXPECT_FALSE(versions.exists(5, 1));
+    EXPECT_FALSE(versions.exists(6, 1));
+
+    // Version 2
+    EXPECT_TRUE(versions.exists(1, 2));
+    EXPECT_FALSE(versions.exists(2, 2));
+    EXPECT_TRUE(versions.exists(3, 2));
+    EXPECT_TRUE(versions.exists(4, 2));
+    EXPECT_FALSE(versions.exists(5, 2));
+    EXPECT_FALSE(versions.exists(6, 2));
+
+    // Version 3
+    EXPECT_TRUE(versions.exists(1, 3));
+    EXPECT_FALSE(versions.exists(2, 3));
+    EXPECT_TRUE(versions.exists(3, 3));
+    EXPECT_TRUE(versions.exists(4, 3));
+    EXPECT_TRUE(versions.exists(5, 3));
+    EXPECT_FALSE(versions.exists(6, 3));
+
+    // Version 4
+    EXPECT_TRUE(versions.exists(1, 4));
+    EXPECT_FALSE(versions.exists(2, 4));
+    EXPECT_TRUE(versions.exists(3, 4));
+    EXPECT_TRUE(versions.exists(4, 4));
+    EXPECT_TRUE(versions.exists(5, 4));
+    EXPECT_TRUE(versions.exists(6, 4));
+}
+
 TEST_F(DeltaVersionsTest, IsAncestor) {
     EXPECT_TRUE(versions.is_ancestor(1, 4, 0));
     EXPECT_TRUE(versions.is_ancestor(1, 3, 0));

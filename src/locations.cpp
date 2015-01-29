@@ -383,6 +383,19 @@ size_t DeltaVersions::insert_delta(DeltaFunction const& delta) {
     }
 }
 
+bool DeltaVersions::exists(uint32_t const id, size_t version) {
+    NIEdge edge;
+    if (!edges.search(id, edge)) {
+        return false;
+    }
+    if (version == 0) {
+        return edge.lower < init_max;
+    } else {
+        edge = get_version(edge, version);
+        return edge.lower < deltas[0][version - 1].max;
+    }
+}
+
 bool DeltaVersions::is_ancestor(uint32_t const parent_id, uint32_t const child_id) {
     return is_ancestor(parent_id, child_id, max_version());
 }
