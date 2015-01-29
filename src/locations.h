@@ -99,11 +99,11 @@ public:
         return deltas[0].size();
     }
 
-    NIEdge get_version(NIEdge const& edge, size_t version) const;
+    NIEdge get_version(NIEdge const& edge, size_t const version) const;
     size_t insert_delta(DeltaFunction const& delta);
 
-    bool is_ancestor(uint32_t const parent_id, uint32_t child_id);
-    bool is_ancestor(uint32_t const parent_id, uint32_t child_id, uint32_t version);
+    bool is_ancestor(uint32_t const parent_id, uint32_t const child_id);
+    bool is_ancestor(uint32_t const parent_id, uint32_t const child_id, size_t const version);
 };
 
 struct DeltaniModeData{

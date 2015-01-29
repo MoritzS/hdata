@@ -330,29 +330,32 @@ DeltaVersions::DeltaVersions(NIEdgeTree& edges, uint32_t const max)
 : init_max(max), edges(std::move(edges)) {
 }
 
-NIEdge DeltaVersions::get_version(NIEdge const& edge, size_t version) const {
+NIEdge DeltaVersions::get_version(NIEdge const& edge, size_t const version) const {
+    size_t v;
     if (version > max_version()) {
-        version = max_version();
+        v = max_version();
+    } else {
+        v = version;
     }
-    if (version == 0) {
+    if (v == 0) {
         return edge;
     }
 
     // power = floor(log2(version));
     size_t power = sizeof(size_t) * 8 - 1;
-    while (version >> power == 0) {
+    while (v >> power == 0) {
         power--;
     }
 
     NIEdge new_edge = edge;
     size_t current_version = 0;
-    while (current_version < version) {
+    while (current_version < v) {
         size_t step = UINTMAX_C(1) << power;
         new_edge = deltas[power][current_version / step].apply(new_edge);
         current_version += step;
         if (power > 0) {
             power--;
-            while (version >> power == 0) {
+            while (v >> power == 0) {
                 power--;
             }
         }
@@ -380,11 +383,11 @@ size_t DeltaVersions::insert_delta(DeltaFunction const& delta) {
     }
 }
 
-bool DeltaVersions::is_ancestor(uint32_t const parent_id, uint32_t child_id) {
+bool DeltaVersions::is_ancestor(uint32_t const parent_id, uint32_t const child_id) {
     return is_ancestor(parent_id, child_id, max_version());
 }
 
-bool DeltaVersions::is_ancestor(uint32_t const parent_id, uint32_t child_id, uint32_t version) {
+bool DeltaVersions::is_ancestor(uint32_t const parent_id, uint32_t const child_id, size_t const version) {
     NIEdge parent_edge;
     NIEdge child_edge;
     if (!edges.search(parent_id, parent_edge)) {
