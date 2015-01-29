@@ -679,6 +679,10 @@ public:
         }
     }
 
+    bool empty() const {
+        return root_node->num_keys == 0;
+    }
+
     size_t depth() const {
         size_t d = 1;
         BPNode* node = root_node;
