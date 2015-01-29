@@ -86,6 +86,21 @@ TEST_F(DeltaFunctionTest, Merge) {
     }
 }
 
+TEST_F(DeltaFunctionTest, EmptyFunction) {
+    DeltaFunction empty;
+    DeltaFunction merged1 = d.merge(empty);
+    DeltaFunction merged2 = empty.merge(d);
+
+    for (uint32_t i = 1; i <= 8; i++) {
+        EXPECT_EQ(i, empty.evaluate(i));
+        EXPECT_EQ(i, empty.evaluate_inv(i));
+
+        EXPECT_EQ(d.evaluate(i), merged1.evaluate(i));
+        EXPECT_EQ(d.evaluate(i), merged2.evaluate(i));
+        EXPECT_EQ(d.evaluate_inv(i), merged1.evaluate_inv(i));
+        EXPECT_EQ(d.evaluate_inv(i), merged2.evaluate_inv(i));
+    }
+}
 
 class DeltaVersionsTest
 : public ::testing::Test {

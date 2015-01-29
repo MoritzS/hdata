@@ -267,13 +267,21 @@ void DeltaFunction::add_range(DeltaRange const& range) {
 }
 
 uint32_t DeltaFunction::evaluate(uint32_t const value) const {
-    DeltaRange const& range = *ranges.search_range(value).begin();
-    return value + range.to - range.from;
+    if (!ranges.empty()) {
+        DeltaRange const& range = *ranges.search_range(value).begin();
+        return value + range.to - range.from;
+    } else {
+        return value;
+    }
 }
 
 uint32_t DeltaFunction::evaluate_inv(uint32_t const value) const {
-    DeltaRange const& range = *ranges_inv.search_range(value).begin();
-    return value - range.to + range.from;
+    if (!ranges_inv.empty()) {
+        DeltaRange const& range = *ranges_inv.search_range(value).begin();
+        return value - range.to + range.from;
+    } else {
+        return value;
+    }
 }
 
 NIEdge DeltaFunction::apply(NIEdge const& edge) const {
@@ -285,6 +293,11 @@ NIEdge DeltaFunction::apply(NIEdge const& edge) const {
 }
 
 DeltaFunction DeltaFunction::merge(DeltaFunction const& delta) const {
+    if (delta.ranges.empty()) {
+        return *this;
+    } else if (ranges.empty()) {
+        return delta;
+    }
     DeltaFunction new_delta;
     new_delta.max = delta.max;
     for (DeltaRange range : ranges.search_range(0)) {
