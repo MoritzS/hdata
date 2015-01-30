@@ -261,6 +261,11 @@ ModeInfo niModeInfo = {
     }
 };
 
+
+bool DeltaFunction::empty() const {
+    return ranges.empty();
+}
+
 void DeltaFunction::add_range(DeltaRange const& range) {
     ranges.insert(range.from, range);
     ranges_inv.insert(range.to, range);

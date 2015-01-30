@@ -55,6 +55,8 @@ private:
 public:
     uint32_t max;
 
+    bool empty() const;
+
     void add_range(DeltaRange const& range);
     uint32_t evaluate(uint32_t const value) const;
     uint32_t evaluate_inv(uint32_t const value) const;
