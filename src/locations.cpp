@@ -1,5 +1,6 @@
 #include "locations.h"
 
+#include <algorithm>
 #include <iostream>
 #include <map>
 #include <stack>
@@ -318,21 +319,24 @@ DeltaFunction DeltaFunction::merge(DeltaFunction const& delta) const {
 }
 
 DeltaVersions::DeltaVersions()
-: init_max(0) {
+: init_max(0), max_edge(0) {
 }
 
 DeltaVersions::DeltaVersions(NIEdgeTree& edges)
-: edges(std::move(edges)) {
+: max_edge(0), edges(std::move(edges)) {
     // search root (edge with e.lower == 1)
     for (NIEdge& e : this->edges.search_range(0)) {
         if (e.lower == 1) {
             init_max = e.upper + 1;
         }
+        if (e.upper > max_edge) {
+            max_edge = e.upper;
+        }
     }
 }
 
-DeltaVersions::DeltaVersions(NIEdgeTree& edges, uint32_t const max)
-: init_max(max), edges(std::move(edges)) {
+DeltaVersions::DeltaVersions(NIEdgeTree& edges, uint32_t const max, uint32_t const max_edge)
+: init_max(max), max_edge(max_edge), edges(std::move(edges)) {
 }
 
 NIEdge DeltaVersions::get_edge(NIEdge const& edge, size_t const version, bool const use_wip) const {
@@ -448,6 +452,36 @@ bool DeltaVersions::is_ancestor(uint32_t const parent_id, uint32_t const child_i
     return is_ancestor(parent_id, child_id, version, false);
 }
 
+void DeltaVersions::insert(uint32_t const id, uint32_t const parent_id) {
+    NIEdge parent_edge;
+    if (!edges.search(parent_id, parent_edge)) {
+        throw deltani_invalid_id(parent_id);
+    }
+    parent_edge = get_edge(parent_edge);
+
+    if (exists(id)) {
+        throw deltani_id_exists(id);
+    }
+
+    NIEdge inserting_edge;
+    if (edges.search(id, inserting_edge)) {
+        inserting_edge = get_edge(inserting_edge);
+    } else {
+        inserting_edge.loc_id = id;
+        inserting_edge.lower = max_edge + 1;
+        inserting_edge.upper = max_edge + 2;
+        edges.insert(id, inserting_edge);
+        max_edge += 2;
+    }
+    DeltaFunction delta;
+    delta.add_range({1, 1});
+    delta.add_range({parent_edge.upper, parent_edge.upper + 2});
+    delta.add_range({inserting_edge.lower, parent_edge.upper});
+    delta.add_range({inserting_edge.upper + 1, inserting_edge.upper + 1});
+    delta.max = std::max(wip_delta.max, deltas[0][deltas[0].size() - 1].max) + 2;
+
+    wip_delta = wip_delta.merge(delta);
+}
 
 ModeInfo deltaniModeInfo = {
     // init_mode

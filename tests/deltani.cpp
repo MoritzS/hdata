@@ -115,7 +115,7 @@ public:
         edges.insert(4, {4, 2, 5});
         edges.insert(5, {5, 9, 10});
         edges.insert(6, {6, 11, 12});
-        versions = DeltaVersions(edges, 9);
+        versions = DeltaVersions(edges, 9, 12);
 
         DeltaFunction v1;
         v1.add_range({1, 1});
@@ -573,4 +573,15 @@ TEST_F(DeltaVersionsTest, NotIsAncestor) {
     EXPECT_FALSE(versions.is_ancestor(6, 3, 4));
     EXPECT_FALSE(versions.is_ancestor(6, 4, 4));
     EXPECT_FALSE(versions.is_ancestor(6, 6, 4));
+}
+
+TEST_F(DeltaVersionsTest, Insert) {
+    EXPECT_THROW(versions.insert(7, 100), deltani_invalid_id);
+    EXPECT_THROW(versions.insert(3, 1), deltani_id_exists);
+
+    versions.insert(7, 3);
+
+    EXPECT_TRUE(versions.exists(7));
+    EXPECT_TRUE(versions.is_ancestor(3, 7));
+    EXPECT_TRUE(versions.is_ancestor(1, 7));
 }

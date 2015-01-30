@@ -86,9 +86,24 @@ public:
     }
 };
 
+class deltani_id_exists
+: public deltani_error {
+public:
+    uint32_t const id;
+
+    deltani_id_exists(uint32_t const id)
+    : id(id) {
+    }
+
+    virtual const char* what() const noexcept {
+        return "deltani: id already exists";
+    }
+};
+
 class DeltaVersions {
 private:
     uint32_t init_max;
+    uint32_t max_edge;
     NIEdgeTree edges;
     std::vector<std::vector<DeltaFunction>> deltas;
     DeltaFunction wip_delta;
@@ -100,7 +115,7 @@ private:
 public:
     DeltaVersions();
     DeltaVersions(NIEdgeTree& edges);
-    DeltaVersions(NIEdgeTree& edges, uint32_t const max);
+    DeltaVersions(NIEdgeTree& edges, uint32_t const max, uint32_t const max_edge);
 
     inline size_t max_version() const {
         return deltas[0].size();
@@ -114,6 +129,8 @@ public:
     bool exists(uint32_t const id, size_t const version) const;
     bool is_ancestor(uint32_t const parent_id, uint32_t const child_id) const;
     bool is_ancestor(uint32_t const parent_id, uint32_t const child_id, size_t const version) const;
+
+    void insert(uint32_t const id, uint32_t const parent_id);
 };
 
 struct DeltaniModeData{
