@@ -552,8 +552,24 @@ ModeInfo deltaniModeInfo = {
             } catch (deltani_invalid_id& e) {
                 cout << "id " << e.id << " not found" << endl;
             }
-            return 0;
-
+        } else if (s == "insert") {
+            uint32_t parent_id;
+            uint32_t new_id;
+            if (!(stream_ui(stream, parent_id) && stream_ui(stream, new_id))) {
+                cout << "invalid ids" << endl;
+                return 0;
+            }
+            try {
+                data.deltani->versions.insert(new_id, parent_id);
+                cout << "inserted" << endl;
+            } catch (deltani_invalid_id& e) {
+                cout << "parent id " << e.id << " invalid" << endl;
+            } catch (deltani_id_exists& e) {
+                cout << "id " << e.id << " already exists" << endl;
+            }
+        } else if (s == "save") {
+            uint32_t version = data.deltani->versions.save();
+            cout << "saved, newest version is " << version << endl;
         } else {
             cout << "unknown command '" << s << "'" << endl;
         }
