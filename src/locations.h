@@ -119,9 +119,7 @@ public:
     DeltaVersions(NIEdgeTree& edges);
     DeltaVersions(NIEdgeTree& edges, uint32_t const max, uint32_t const max_edge);
 
-    inline size_t max_version() const {
-        return deltas[0].size();
-    }
+    size_t max_version() const;
 
     NIEdge get_edge(NIEdge const& edge) const;
     NIEdge get_edge(NIEdge const& edge, size_t const version) const;

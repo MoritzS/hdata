@@ -1,6 +1,5 @@
 #include "locations.h"
 
-#include <algorithm>
 #include <iostream>
 #include <map>
 #include <stack>
@@ -343,6 +342,14 @@ DeltaVersions::DeltaVersions(NIEdgeTree& edges, uint32_t const max, uint32_t con
 : init_max(max), max_edge(max_edge), edges(std::move(edges)), deltas(), wip_delta() {
 }
 
+size_t DeltaVersions::max_version() const {
+    if (deltas.empty()) {
+        return 0;
+    } else {
+        return deltas[0].size();
+    }
+}
+
 NIEdge DeltaVersions::get_edge(NIEdge const& edge, size_t const version, bool const use_wip) const {
     size_t v;
     if (version > max_version()) {
@@ -482,7 +489,13 @@ void DeltaVersions::insert(uint32_t const id, uint32_t const parent_id) {
     delta.add_range({parent_edge.upper, parent_edge.upper + 2});
     delta.add_range({inserting_edge.lower, parent_edge.upper});
     delta.add_range({inserting_edge.upper + 1, inserting_edge.upper + 1});
-    delta.max = std::max(wip_delta.max, deltas[0][deltas[0].size() - 1].max) + 2;
+    if (deltas.empty()) {
+        delta.max = init_max + 2;
+    } else if (wip_delta.empty()) {
+        delta.max = deltas[0][deltas[0].size() - 1].max + 2;
+    } else {
+        delta.max = wip_delta.max + 2;
+    }
 
     wip_delta = wip_delta.merge(delta);
 }
