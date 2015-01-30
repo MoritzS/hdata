@@ -430,10 +430,10 @@ bool DeltaVersions::is_ancestor(uint32_t const parent_id, uint32_t const child_i
     NIEdge parent_edge;
     NIEdge child_edge;
     if (!edges.search(parent_id, parent_edge)) {
-        throw new deltani_invalid_id(parent_id);
+        throw deltani_invalid_id(parent_id);
     }
     if (!edges.search(child_id, child_edge)) {
-        throw new deltani_invalid_id(child_id);
+        throw deltani_invalid_id(child_id);
     }
     parent_edge = get_edge(parent_edge, version, use_wip);
     child_edge = get_edge(child_edge, version, use_wip);
