@@ -263,6 +263,10 @@ ModeInfo niModeInfo = {
 };
 
 
+DeltaFunction::DeltaFunction()
+:ranges(), ranges_inv(), max(0) {
+}
+
 bool DeltaFunction::empty() const {
     return ranges.empty();
 }
@@ -319,11 +323,11 @@ DeltaFunction DeltaFunction::merge(DeltaFunction const& delta) const {
 }
 
 DeltaVersions::DeltaVersions()
-: init_max(0), max_edge(0) {
+: init_max(0), max_edge(0), edges(), deltas(), wip_delta() {
 }
 
 DeltaVersions::DeltaVersions(NIEdgeTree& edges)
-: max_edge(0), edges(std::move(edges)) {
+: max_edge(0), edges(std::move(edges)), deltas(), wip_delta() {
     // search root (edge with e.lower == 1)
     for (NIEdge& e : this->edges.search_range(0)) {
         if (e.lower == 1) {
@@ -336,7 +340,7 @@ DeltaVersions::DeltaVersions(NIEdgeTree& edges)
 }
 
 DeltaVersions::DeltaVersions(NIEdgeTree& edges, uint32_t const max, uint32_t const max_edge)
-: init_max(max), max_edge(max_edge), edges(std::move(edges)) {
+: init_max(max), max_edge(max_edge), edges(std::move(edges)), deltas(), wip_delta() {
 }
 
 NIEdge DeltaVersions::get_edge(NIEdge const& edge, size_t const version, bool const use_wip) const {

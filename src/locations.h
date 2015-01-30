@@ -55,6 +55,8 @@ private:
 public:
     uint32_t max;
 
+    DeltaFunction();
+
     bool empty() const;
 
     void add_range(DeltaRange const& range);
