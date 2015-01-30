@@ -487,6 +487,16 @@ void DeltaVersions::insert(uint32_t const id, uint32_t const parent_id) {
     wip_delta = wip_delta.merge(delta);
 }
 
+uint32_t DeltaVersions::save() {
+    if (wip_delta.empty()) {
+        return max_version();
+    } else {
+        uint32_t new_version = insert_delta(wip_delta);
+        wip_delta = DeltaFunction();
+        return new_version;
+    }
+}
+
 ModeInfo deltaniModeInfo = {
     // init_mode
     [] (std::ifstream& file, ModeData& data) {
