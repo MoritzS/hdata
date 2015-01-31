@@ -102,6 +102,34 @@ TEST_F(DeltaFunctionTest, EmptyFunction) {
     }
 }
 
+
+TEST(DeltaVersionsSanityTest, Empty) {
+    NIEdgeTree edges;
+    edges.insert(1, {1, 1, 8});
+    edges.insert(2, {2, 3, 4});
+    edges.insert(3, {3, 6, 7});
+    edges.insert(4, {4, 2, 5});
+    edges.insert(5, {5, 9, 10});
+    edges.insert(6, {6, 11, 12});
+    DeltaVersions versions = DeltaVersions(edges, 9, 12);
+
+    ASSERT_EQ(0, versions.max_version());
+
+    EXPECT_TRUE(versions.exists(1));
+    EXPECT_TRUE(versions.exists(2));
+    EXPECT_TRUE(versions.exists(3));
+    EXPECT_TRUE(versions.exists(4));
+    EXPECT_FALSE(versions.exists(5));
+    EXPECT_FALSE(versions.exists(6));
+
+    versions.insert(7, 1);
+
+    EXPECT_TRUE(versions.exists(7));
+    EXPECT_TRUE(versions.is_ancestor(1, 7));
+
+    EXPECT_EQ(1, versions.save());
+}
+
 class DeltaVersionsTest
 : public ::testing::Test {
 public:

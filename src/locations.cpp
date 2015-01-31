@@ -358,7 +358,11 @@ NIEdge DeltaVersions::get_edge(NIEdge const& edge, size_t const version, bool co
         v = version;
     }
     if (v == 0) {
-        return edge;
+        if (wip_delta.empty()) {
+            return edge;
+        } else {
+            return wip_delta.apply(edge);
+        }
     }
 
     // power = floor(log2(version));
@@ -422,7 +426,11 @@ bool DeltaVersions::exists(uint32_t const id, size_t const version, bool const u
         return false;
     }
     if (version == 0) {
-        return edge.lower < init_max;
+        if (use_wip && !wip_delta.empty()) {
+            return wip_delta.evaluate(edge.lower) < wip_delta.max;
+        } else {
+            return edge.lower < init_max;
+        }
     } else {
         edge = get_edge(edge, version, use_wip);
         if (use_wip && !wip_delta.empty()) {
