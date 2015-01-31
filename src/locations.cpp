@@ -309,10 +309,10 @@ DeltaFunction DeltaFunction::merge(DeltaFunction const& delta) const {
     }
     DeltaFunction new_delta;
     new_delta.max = delta.max;
-    for (DeltaRange range : ranges.search_range(0)) {
+    for (DeltaRange range : ranges) {
         new_delta.add_range({range.from, delta.evaluate(range.to)});
     }
-    for (DeltaRange range : delta.ranges.search_range(0)) {
+    for (DeltaRange range : delta.ranges) {
         uint32_t from = evaluate_inv(range.from);
         if (new_delta.ranges.count_key(from) == 0) {
             new_delta.add_range({from, range.to});
@@ -328,7 +328,7 @@ DeltaVersions::DeltaVersions()
 DeltaVersions::DeltaVersions(NIEdgeTree& edges)
 : max_edge(0), edges(std::move(edges)), deltas(), wip_delta() {
     // search root (edge with e.lower == 1)
-    for (NIEdge& e : this->edges.search_range(0)) {
+    for (NIEdge& e : this->edges) {
         if (e.lower == 1) {
             init_max = e.upper + 1;
         }

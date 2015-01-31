@@ -587,6 +587,18 @@ public:
         return *this;
     }
 
+    BPRangeIterator begin() const {
+        BPNode* node = root_node;
+        while (node->type == BP_INNER) {
+            node = node->inner.pointers[0];
+        }
+        return BPRangeIterator(node, 0);
+    }
+
+    BPRangeIterator end() const {
+        return BPRangeIterator();
+    }
+
     /*
      * Searches for key.
      * If key is found, data will contain the associated data and search
