@@ -629,3 +629,14 @@ TEST_F(DeltaVersionsTest, Insert) {
     EXPECT_TRUE(versions.is_ancestor(3, 7));
     EXPECT_TRUE(versions.is_ancestor(1, 7));
 }
+
+TEST_F(DeltaVersionsTest, Save) {
+    EXPECT_EQ(4, versions.save());
+
+    versions.insert(7, 3);
+
+    EXPECT_EQ(5, versions.save());
+    EXPECT_TRUE(versions.exists(7, 5));
+    EXPECT_TRUE(versions.is_ancestor(3, 7, 5));
+    EXPECT_TRUE(versions.is_ancestor(1, 7, 5));
+}
