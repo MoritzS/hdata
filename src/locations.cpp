@@ -379,7 +379,7 @@ NIEdge DeltaVersions::get_edge(NIEdge const& edge, size_t const version, bool co
         current_version += step;
         if (power > 0) {
             power--;
-            while (v >> power == 0) {
+            while (((v >> power) & 1) == 0) {
                 power--;
             }
         }

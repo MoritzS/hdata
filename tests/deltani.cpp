@@ -103,16 +103,24 @@ TEST_F(DeltaFunctionTest, EmptyFunction) {
 }
 
 
-TEST(DeltaVersionsSanityTest, Empty) {
-    NIEdgeTree edges;
-    edges.insert(1, {1, 1, 8});
-    edges.insert(2, {2, 3, 4});
-    edges.insert(3, {3, 6, 7});
-    edges.insert(4, {4, 2, 5});
-    edges.insert(5, {5, 9, 10});
-    edges.insert(6, {6, 11, 12});
-    DeltaVersions versions = DeltaVersions(edges, 9, 12);
+class DeltaVersionsSanityTest
+: public ::testing::Test {
+public:
+    DeltaVersions versions;
 
+    virtual void SetUp() {
+        NIEdgeTree edges;
+        edges.insert(1, {1, 1, 8});
+        edges.insert(2, {2, 3, 4});
+        edges.insert(3, {3, 6, 7});
+        edges.insert(4, {4, 2, 5});
+        edges.insert(5, {5, 9, 10});
+        edges.insert(6, {6, 11, 12});
+        versions = DeltaVersions(edges, 9, 12);
+    }
+};
+
+TEST_F(DeltaVersionsSanityTest, Empty) {
     ASSERT_EQ(0, versions.max_version());
 
     EXPECT_TRUE(versions.exists(1));
@@ -130,20 +138,28 @@ TEST(DeltaVersionsSanityTest, Empty) {
     EXPECT_EQ(1, versions.save());
 }
 
-class DeltaVersionsTest
-: public ::testing::Test {
-public:
-    DeltaVersions versions;
+TEST_F(DeltaVersionsSanityTest, ManyVersions) {
+    for (size_t i=1; i <= 10000; i++) {
+        DeltaFunction delta;
+        delta.add_range({1, 1});
+        delta.max = 9;
+        versions.insert_delta(delta);
+    }
+    for (size_t i=1; i <= 10000; i++) {
+        EXPECT_TRUE(versions.exists(1, i));
+        EXPECT_TRUE(versions.exists(2, i));
+        EXPECT_TRUE(versions.exists(3, i));
+        EXPECT_TRUE(versions.exists(4, i));
+        EXPECT_FALSE(versions.exists(5, i));
+        EXPECT_FALSE(versions.exists(6, i));
+    }
+}
 
+class DeltaVersionsTest
+: public DeltaVersionsSanityTest {
+public:
     virtual void SetUp() {
-        NIEdgeTree edges;
-        edges.insert(1, {1, 1, 8});
-        edges.insert(2, {2, 3, 4});
-        edges.insert(3, {3, 6, 7});
-        edges.insert(4, {4, 2, 5});
-        edges.insert(5, {5, 9, 10});
-        edges.insert(6, {6, 11, 12});
-        versions = DeltaVersions(edges, 9, 12);
+        DeltaVersionsSanityTest::SetUp();
 
         DeltaFunction v1;
         v1.add_range({1, 1});
