@@ -42,3 +42,12 @@ Session.vim
 
 ### Autotools ###
 /autom4te.cache
+config.h
+/config.status
+.deps
+Makefile
+stamp-h1
+
+### Misc ###
+*.log
+*.trs
