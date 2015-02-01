@@ -59,6 +59,15 @@ AS_IF([test "$use_bmi" = "yes"],
 AC_CHECK_LIB([readline], [readline], [], [AC_MSG_ERROR([readline not found])])
 AS_IF([test "$use_gtest" = "yes"],
 [
+    AC_CHECK_LIB([gtest], [_init],
+    [
+        GTEST_LIBS="-lgtest"
+        AC_SUBST([GTEST_LIBS])
+    ],
+    [
+        use_gtest="no"
+        AC_MSG_WARN([couldn't find gtest library, tests not available])
+    ])
     AX_PTHREAD([],
     [
         use_gtest="no"
