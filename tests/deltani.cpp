@@ -138,6 +138,22 @@ TEST_F(DeltaVersionsSanityTest, Empty) {
     EXPECT_EQ(1, versions.save());
 }
 
+TEST_F(DeltaVersionsSanityTest, MultipleInsertOnEmpty) {
+    versions.insert(7, 4);
+    versions.insert(8, 7);
+    versions.insert(9, 4);
+
+    EXPECT_TRUE(versions.exists(1));
+    EXPECT_TRUE(versions.exists(2));
+    EXPECT_TRUE(versions.exists(3));
+    EXPECT_TRUE(versions.exists(4));
+    EXPECT_FALSE(versions.exists(5));
+    EXPECT_FALSE(versions.exists(6));
+    EXPECT_TRUE(versions.exists(7));
+    EXPECT_TRUE(versions.exists(8));
+    EXPECT_TRUE(versions.exists(9));
+}
+
 TEST_F(DeltaVersionsSanityTest, ManyVersions) {
     for (size_t i=1; i <= 10000; i++) {
         DeltaFunction delta;

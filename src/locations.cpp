@@ -497,12 +497,12 @@ void DeltaVersions::insert(uint32_t const id, uint32_t const parent_id) {
     delta.add_range({parent_edge.upper, parent_edge.upper + 2});
     delta.add_range({inserting_edge.lower, parent_edge.upper});
     delta.add_range({inserting_edge.upper + 1, inserting_edge.upper + 1});
-    if (deltas.empty()) {
-        delta.max = init_max + 2;
-    } else if (wip_delta.empty()) {
-        delta.max = deltas[0][deltas[0].size() - 1].max + 2;
-    } else {
+    if (!wip_delta.empty()) {
         delta.max = wip_delta.max + 2;
+    } else if (deltas.empty()) {
+        delta.max = init_max + 2;
+    } else {
+        delta.max = deltas[0][deltas[0].size() - 1].max + 2;
     }
 
     wip_delta = wip_delta.merge(delta);
