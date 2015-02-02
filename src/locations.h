@@ -89,13 +89,9 @@ public:
 };
 
 class deltani_id_exists
-: public deltani_error {
+: public deltani_invalid_id {
 public:
-    uint32_t const id;
-
-    deltani_id_exists(uint32_t const id)
-    : id(id) {
-    }
+    using deltani_invalid_id::deltani_invalid_id;
 
     virtual const char* what() const noexcept {
         return "deltani: id already exists";

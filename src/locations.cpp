@@ -570,10 +570,10 @@ ModeInfo deltaniModeInfo = {
             try {
                 data.deltani->versions.insert(new_id, parent_id);
                 cout << "inserted" << endl;
-            } catch (deltani_invalid_id& e) {
-                cout << "parent id " << e.id << " invalid" << endl;
             } catch (deltani_id_exists& e) {
                 cout << "id " << e.id << " already exists" << endl;
+            } catch (deltani_invalid_id& e) {
+                cout << "parent id " << e.id << " invalid" << endl;
             }
         } else if (s == "save") {
             uint32_t version = data.deltani->versions.save();
