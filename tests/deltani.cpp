@@ -154,6 +154,12 @@ TEST_F(DeltaVersionsSanityTest, MultipleInsertOnEmpty) {
     EXPECT_TRUE(versions.exists(9));
 }
 
+TEST_F(DeltaVersionsSanityTest, InsertAndRemove) {
+    versions.remove(2);
+
+    EXPECT_THROW(versions.insert(7, 2), deltani_id_removed);
+}
+
 TEST_F(DeltaVersionsSanityTest, ManyVersions) {
     for (size_t i=1; i <= 10000; i++) {
         DeltaFunction delta;

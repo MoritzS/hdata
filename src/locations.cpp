@@ -476,6 +476,9 @@ void DeltaVersions::insert(uint32_t const id, uint32_t const parent_id) {
     if (!edges.search(parent_id, parent_edge)) {
         throw deltani_invalid_id(parent_id);
     }
+    if (!exists(parent_id)) {
+        throw deltani_id_removed(parent_id);
+    }
     parent_edge = get_edge(parent_edge);
 
     if (exists(id)) {
@@ -606,6 +609,8 @@ ModeInfo deltaniModeInfo = {
                 cout << "inserted" << endl;
             } catch (deltani_id_exists& e) {
                 cout << "id " << e.id << " already exists" << endl;
+            } catch (deltani_id_removed& e) {
+                cout << "parent id " << e.id << " has already been removed" << endl;
             } catch (deltani_invalid_id& e) {
                 cout << "parent id " << e.id << " invalid" << endl;
             }
