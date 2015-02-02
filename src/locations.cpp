@@ -614,6 +614,21 @@ ModeInfo deltaniModeInfo = {
             } catch (deltani_invalid_id& e) {
                 cout << "parent id " << e.id << " invalid" << endl;
             }
+        } else if (s == "remove") {
+            uint32_t id;
+            if (!stream_ui(stream, id)) {
+                cout << "invalid id" << endl;
+            }
+            try {
+                data.deltani->versions.remove(id);
+                cout << "removed" << endl;
+            } catch (deltani_id_removed& e) {
+                cout << "id " << e.id << " has already been removed" << endl;
+            } catch (deltani_id_has_children& e) {
+                cout << "can't remove because id has children" << endl;
+            } catch (deltani_invalid_id& e) {
+                cout << "invalid id" << endl;
+            }
         } else if (s == "save") {
             uint32_t version = data.deltani->versions.save();
             cout << "saved, newest version is " << version << endl;
