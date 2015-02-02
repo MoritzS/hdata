@@ -508,6 +508,40 @@ void DeltaVersions::insert(uint32_t const id, uint32_t const parent_id) {
     wip_delta = wip_delta.merge(delta);
 }
 
+void DeltaVersions::remove(uint32_t const id) {
+    NIEdge edge;
+    if (!edges.search(id, edge)) {
+        throw deltani_invalid_id(id);
+    }
+    if (!exists(id)) {
+        throw deltani_id_removed(id);
+    }
+    edge = get_edge(edge);
+
+    if (edge.upper - edge.lower > 1) {
+        throw deltani_id_has_children(id);
+    }
+
+    DeltaFunction delta;
+    delta.add_range({1, 1});
+    if (edge.lower == 1) {
+        delta.max = 1;
+    } else {
+        if (!wip_delta.empty()) {
+            delta.max = wip_delta.max - 2;
+        } else if (deltas.empty()) {
+            delta.max = init_max - 2;
+        } else {
+            delta.max = deltas[0][deltas[0].size() - 1].max - 2;
+        }
+        delta.add_range({edge.lower, delta.max});
+        delta.add_range({edge.upper + 1, edge.lower});
+        delta.add_range({delta.max + 2, delta.max + 2});
+    }
+
+    wip_delta = wip_delta.merge(delta);
+}
+
 uint32_t DeltaVersions::save() {
     if (wip_delta.empty()) {
         return max_version();

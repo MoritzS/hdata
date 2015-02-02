@@ -98,6 +98,26 @@ public:
     }
 };
 
+class deltani_id_removed
+: public deltani_invalid_id {
+public:
+    using deltani_invalid_id::deltani_invalid_id;
+
+    virtual const char* what() const noexcept {
+        return "deltani: id is removed";
+    }
+};
+
+class deltani_id_has_children
+: public deltani_invalid_id {
+public:
+    using deltani_invalid_id::deltani_invalid_id;
+
+    virtual const char* what() const noexcept {
+        return "deltani: id has children";
+    }
+};
+
 class DeltaVersions {
 private:
     uint32_t init_max;
@@ -127,6 +147,7 @@ public:
     bool is_ancestor(uint32_t const parent_id, uint32_t const child_id, size_t const version) const;
 
     void insert(uint32_t const id, uint32_t const parent_id);
+    void remove(uint32_t const id);
     uint32_t save();
 };
 

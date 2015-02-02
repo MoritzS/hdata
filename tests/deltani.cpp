@@ -646,6 +646,34 @@ TEST_F(DeltaVersionsTest, Insert) {
     EXPECT_TRUE(versions.is_ancestor(1, 7));
 }
 
+TEST_F(DeltaVersionsTest, Remove) {
+    EXPECT_THROW(versions.remove(100), deltani_invalid_id);
+    EXPECT_THROW(versions.remove(2), deltani_id_removed);
+    EXPECT_THROW(versions.remove(4), deltani_id_has_children);
+
+    versions.remove(5);
+
+    EXPECT_FALSE(versions.exists(5));
+    EXPECT_FALSE(versions.is_ancestor(6, 5));
+    EXPECT_FALSE(versions.is_ancestor(1, 5));
+    EXPECT_TRUE(versions.is_ancestor(1, 6));
+}
+
+TEST_F(DeltaVersionsTest, RemoveAll) {
+    versions.remove(3);
+    versions.remove(4);
+    versions.remove(5);
+    versions.remove(6);
+    versions.remove(1);
+
+    EXPECT_FALSE(versions.exists(1));
+    EXPECT_FALSE(versions.exists(2));
+    EXPECT_FALSE(versions.exists(3));
+    EXPECT_FALSE(versions.exists(4));
+    EXPECT_FALSE(versions.exists(5));
+    EXPECT_FALSE(versions.exists(6));
+}
+
 TEST_F(DeltaVersionsTest, Save) {
     EXPECT_EQ(4, versions.save());
 
