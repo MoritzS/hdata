@@ -188,6 +188,29 @@ int main(int argc, char** argv) {
                     cout << "NOT ";
                 }
                 cout << "ancestor of id " << child << endl;
+            } else if (cmd == "i" || cmd == "insert") {
+                uint32_t new_id = stream_ui(stream);
+                string new_name;
+                stream >> new_name;
+                if (new_name.length() > 127) {
+                    throw logic_error("name can't have more than 127 characters");
+                }
+                uint32_t parent = stream_ui(stream);
+                Location new_loc;
+                new_loc.id = new_id;
+                new_name.copy(new_loc.name, 127);
+                new_loc.name[new_name.length()] = 0;
+                hierarchy->insert(parent, new_id, new_loc);
+                cout << "inserted " << new_name << " with id " << new_id << " with parent " << parent << endl;
+            } else if (cmd == "r" || cmd == "remove") {
+                uint32_t id = stream_ui(stream);
+                hierarchy->remove(id);
+                cout << "removed id " << id << endl;
+            } else if (cmd == "c" || cmd == "commit") {
+                size_t new_version = hierarchy->commit();
+                cout << "commited changes, new version is " << new_version << endl;
+            } else {
+                cout << "unknown command '" << cmd << "' try 'help'" << endl;
             }
         } catch (hierarchy_error& e) {
             cout << e.what() << endl;
