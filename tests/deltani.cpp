@@ -1,11 +1,17 @@
 #include <cstdint>
 #include <gtest/gtest.h>
-#include "locations.h"
+#include "deltani.h"
+
+typedef DeltaNI<int, int> TestingDeltaNI;
+typedef TestingDeltaNI::NIEdge NIEdge;
+typedef TestingDeltaNI::NIEdgeTree NIEdgeTree;
+typedef TestingDeltaNI::ValueTree ValueTree;
+typedef TestingDeltaNI::DeltaFunction TestingDeltaFunction;
 
 class DeltaFunctionTest
 : public ::testing::Test {
 public:
-    DeltaFunction d;
+    TestingDeltaFunction d;
 
     virtual void SetUp() {
         d.add_range({1, 1});
@@ -44,12 +50,12 @@ TEST_F(DeltaFunctionTest, SimpleApply) {
     NIEdge e;
 
     e = d.apply({123, 1, 8});
-    EXPECT_EQ(123, e.loc_id);
+    EXPECT_EQ(123, e.key);
     EXPECT_EQ(1, e.lower);
     EXPECT_EQ(8, e.upper);
 
     e = d.apply({123, 3, 4});
-    EXPECT_EQ(123, e.loc_id);
+    EXPECT_EQ(123, e.key);
     EXPECT_EQ(3, e.lower);
     EXPECT_EQ(4, e.upper);
 }
@@ -58,19 +64,19 @@ TEST_F(DeltaFunctionTest, AdvancedApply) {
     NIEdge e;
 
     e = d.apply({123, 2, 5});
-    EXPECT_EQ(123, e.loc_id);
+    EXPECT_EQ(123, e.key);
     EXPECT_EQ(2, e.lower);
     EXPECT_EQ(7, e.upper);
 
     e = d.apply({123, 6, 7});
-    EXPECT_EQ(123, e.loc_id);
+    EXPECT_EQ(123, e.key);
     EXPECT_EQ(5, e.lower);
     EXPECT_EQ(6, e.upper);
 }
 
 TEST_F(DeltaFunctionTest, Merge) {
-    DeltaFunction m;
-    DeltaFunction merged;
+    TestingDeltaFunction m;
+    TestingDeltaFunction merged;
 
     m.add_range({1, 1});
     m.add_range({3, 7});
@@ -87,9 +93,9 @@ TEST_F(DeltaFunctionTest, Merge) {
 }
 
 TEST_F(DeltaFunctionTest, EmptyFunction) {
-    DeltaFunction empty;
-    DeltaFunction merged1 = d.merge(empty);
-    DeltaFunction merged2 = empty.merge(d);
+    TestingDeltaFunction empty;
+    TestingDeltaFunction merged1 = d.merge(empty);
+    TestingDeltaFunction merged2 = empty.merge(d);
 
     for (uint32_t i = 1; i <= 8; i++) {
         EXPECT_EQ(i, empty.evaluate(i));
@@ -103,10 +109,10 @@ TEST_F(DeltaFunctionTest, EmptyFunction) {
 }
 
 
-class DeltaVersionsSanityTest
+class DeltaNISanityTest
 : public ::testing::Test {
 public:
-    DeltaVersions versions;
+    TestingDeltaNI versions;
 
     virtual void SetUp() {
         NIEdgeTree edges;
@@ -116,11 +122,15 @@ public:
         edges.insert(4, {4, 2, 5});
         edges.insert(5, {5, 9, 10});
         edges.insert(6, {6, 11, 12});
-        versions = DeltaVersions(edges, 9, 12);
+        ValueTree values;
+        for (int i=1; i<=6; i++) {
+            values.insert(i, i);
+        }
+        versions = TestingDeltaNI(values, edges, 9, 12);
     }
 };
 
-TEST_F(DeltaVersionsSanityTest, Empty) {
+TEST_F(DeltaNISanityTest, Empty) {
     ASSERT_EQ(0, versions.max_version());
 
     EXPECT_TRUE(versions.exists(1));
@@ -130,18 +140,18 @@ TEST_F(DeltaVersionsSanityTest, Empty) {
     EXPECT_FALSE(versions.exists(5));
     EXPECT_FALSE(versions.exists(6));
 
-    versions.insert(7, 1);
+    versions.insert(1, 7, 7);
 
     EXPECT_TRUE(versions.exists(7));
     EXPECT_TRUE(versions.is_ancestor(1, 7));
 
-    EXPECT_EQ(1, versions.save());
+    EXPECT_EQ(1, versions.commit());
 }
 
-TEST_F(DeltaVersionsSanityTest, MultipleInsertOnEmpty) {
-    versions.insert(7, 4);
-    versions.insert(8, 7);
-    versions.insert(9, 4);
+TEST_F(DeltaNISanityTest, MultipleInsertOnEmpty) {
+    versions.insert(4, 7, 7);
+    versions.insert(7, 8, 8);
+    versions.insert(4, 9, 9);
 
     EXPECT_TRUE(versions.exists(1));
     EXPECT_TRUE(versions.exists(2));
@@ -154,15 +164,15 @@ TEST_F(DeltaVersionsSanityTest, MultipleInsertOnEmpty) {
     EXPECT_TRUE(versions.exists(9));
 }
 
-TEST_F(DeltaVersionsSanityTest, InsertAndRemove) {
+TEST_F(DeltaNISanityTest, InsertAndRemove) {
     versions.remove(2);
 
-    EXPECT_THROW(versions.insert(7, 2), deltani_id_removed);
+    EXPECT_THROW(versions.insert(2, 7, 7), deltani_key_removed);
 }
 
-TEST_F(DeltaVersionsSanityTest, ManyVersions) {
+TEST_F(DeltaNISanityTest, ManyVersions) {
     for (size_t i=1; i <= 10000; i++) {
-        DeltaFunction delta;
+        TestingDeltaFunction delta;
         delta.add_range({1, 1});
         delta.max = 9;
         versions.insert_delta(delta);
@@ -177,13 +187,13 @@ TEST_F(DeltaVersionsSanityTest, ManyVersions) {
     }
 }
 
-class DeltaVersionsTest
-: public DeltaVersionsSanityTest {
+class DeltaNITest
+: public DeltaNISanityTest {
 public:
     virtual void SetUp() {
-        DeltaVersionsSanityTest::SetUp();
+        DeltaNISanityTest::SetUp();
 
-        DeltaFunction v1;
+        TestingDeltaFunction v1;
         v1.add_range({1, 1});
         v1.add_range({5, 7});
         v1.add_range({6, 5});
@@ -191,7 +201,7 @@ public:
         v1.max = 9;
         versions.insert_delta(v1);
 
-        DeltaFunction v2;
+        TestingDeltaFunction v2;
         v2.add_range({1, 1});
         v2.add_range({3, 7});
         v2.add_range({5, 3});
@@ -199,7 +209,7 @@ public:
         v2.max = 7;
         versions.insert_delta(v2);
 
-        DeltaFunction v3;
+        TestingDeltaFunction v3;
         v3.add_range({1, 1});
         v3.add_range({2, 4});
         v3.add_range({9, 2});
@@ -208,7 +218,7 @@ public:
         v3.max = 9;
         versions.insert_delta(v3);
 
-        DeltaFunction v4;
+        TestingDeltaFunction v4;
         v4.add_range({1, 1});
         v4.add_range({2, 3});
         v4.add_range({4, 6});
@@ -220,176 +230,176 @@ public:
     }
 };
 
-TEST_F(DeltaVersionsTest, MaxVersion) {
+TEST_F(DeltaNITest, MaxVersion) {
     EXPECT_EQ(4, versions.max_version());
 }
 
-TEST_F(DeltaVersionsTest, NullVersion) {
+TEST_F(DeltaNITest, NullVersion) {
     NIEdge e;
 
     e = versions.get_edge({123, 1, 8}, 0);
-    EXPECT_EQ(123, e.loc_id);
+    EXPECT_EQ(123, e.key);
     EXPECT_EQ(1, e.lower);
     EXPECT_EQ(8, e.upper);
 
     e = versions.get_edge({123, 2, 5}, 0);
-    EXPECT_EQ(123, e.loc_id);
+    EXPECT_EQ(123, e.key);
     EXPECT_EQ(2, e.lower);
     EXPECT_EQ(5, e.upper);
 
     e = versions.get_edge({123, 3, 4}, 0);
-    EXPECT_EQ(123, e.loc_id);
+    EXPECT_EQ(123, e.key);
     EXPECT_EQ(3, e.lower);
     EXPECT_EQ(4, e.upper);
 
     e = versions.get_edge({123, 6, 7}, 0);
-    EXPECT_EQ(123, e.loc_id);
+    EXPECT_EQ(123, e.key);
     EXPECT_EQ(6, e.lower);
     EXPECT_EQ(7, e.upper);
 
     e = versions.get_edge({123, 9, 10}, 0);
-    EXPECT_EQ(123, e.loc_id);
+    EXPECT_EQ(123, e.key);
     EXPECT_EQ(9, e.lower);
     EXPECT_EQ(10, e.upper);
 
     e = versions.get_edge({123, 11, 12}, 0);
-    EXPECT_EQ(123, e.loc_id);
+    EXPECT_EQ(123, e.key);
     EXPECT_EQ(11, e.lower);
     EXPECT_EQ(12, e.upper);
 }
 
-TEST_F(DeltaVersionsTest, SingleStep) {
+TEST_F(DeltaNITest, SingleStep) {
     NIEdge e;
 
     // Version 1
     e = versions.get_edge({123, 1, 8}, 1);
-    EXPECT_EQ(123, e.loc_id);
+    EXPECT_EQ(123, e.key);
     EXPECT_EQ(1, e.lower);
     EXPECT_EQ(8, e.upper);
 
     e = versions.get_edge({123, 2, 5}, 1);
-    EXPECT_EQ(123, e.loc_id);
+    EXPECT_EQ(123, e.key);
     EXPECT_EQ(2, e.lower);
     EXPECT_EQ(7, e.upper);
 
     e = versions.get_edge({123, 3, 4}, 1);
-    EXPECT_EQ(123, e.loc_id);
+    EXPECT_EQ(123, e.key);
     EXPECT_EQ(3, e.lower);
     EXPECT_EQ(4, e.upper);
 
     e = versions.get_edge({123, 6, 7}, 1);
-    EXPECT_EQ(123, e.loc_id);
+    EXPECT_EQ(123, e.key);
     EXPECT_EQ(5, e.lower);
     EXPECT_EQ(6, e.upper);
 
     e = versions.get_edge({123, 9, 10}, 1);
-    EXPECT_EQ(123, e.loc_id);
+    EXPECT_EQ(123, e.key);
     EXPECT_EQ(9, e.lower);
     EXPECT_EQ(10, e.upper);
 
     e = versions.get_edge({123, 11, 12}, 1);
-    EXPECT_EQ(123, e.loc_id);
+    EXPECT_EQ(123, e.key);
     EXPECT_EQ(11, e.lower);
     EXPECT_EQ(12, e.upper);
 
     // Version 2
     e = versions.get_edge({123, 1, 8}, 2);
-    EXPECT_EQ(123, e.loc_id);
+    EXPECT_EQ(123, e.key);
     EXPECT_EQ(1, e.lower);
     EXPECT_EQ(6, e.upper);
 
     e = versions.get_edge({123, 2, 5}, 2);
-    EXPECT_EQ(123, e.loc_id);
+    EXPECT_EQ(123, e.key);
     EXPECT_EQ(2, e.lower);
     EXPECT_EQ(5, e.upper);
 
     e = versions.get_edge({123, 3, 4}, 2);
-    EXPECT_EQ(123, e.loc_id);
+    EXPECT_EQ(123, e.key);
     EXPECT_EQ(7, e.lower);
     EXPECT_EQ(8, e.upper);
 
     e = versions.get_edge({123, 6, 7}, 2);
-    EXPECT_EQ(123, e.loc_id);
+    EXPECT_EQ(123, e.key);
     EXPECT_EQ(3, e.lower);
     EXPECT_EQ(4, e.upper);
 
     e = versions.get_edge({123, 9, 10}, 2);
-    EXPECT_EQ(123, e.loc_id);
+    EXPECT_EQ(123, e.key);
     EXPECT_EQ(9, e.lower);
     EXPECT_EQ(10, e.upper);
 
     e = versions.get_edge({123, 11, 12}, 2);
-    EXPECT_EQ(123, e.loc_id);
+    EXPECT_EQ(123, e.key);
     EXPECT_EQ(11, e.lower);
     EXPECT_EQ(12, e.upper);
 
     // Version 4
     e = versions.get_edge({123, 1, 8}, 4);
-    EXPECT_EQ(123, e.loc_id);
+    EXPECT_EQ(123, e.key);
     EXPECT_EQ(1, e.lower);
     EXPECT_EQ(10, e.upper);
 
     e = versions.get_edge({123, 2, 5}, 4);
-    EXPECT_EQ(123, e.loc_id);
+    EXPECT_EQ(123, e.key);
     EXPECT_EQ(6, e.lower);
     EXPECT_EQ(9, e.upper);
 
     e = versions.get_edge({123, 3, 4}, 4);
-    EXPECT_EQ(123, e.loc_id);
+    EXPECT_EQ(123, e.key);
     EXPECT_EQ(11, e.lower);
     EXPECT_EQ(12, e.upper);
 
     e = versions.get_edge({123, 6, 7}, 4);
-    EXPECT_EQ(123, e.loc_id);
+    EXPECT_EQ(123, e.key);
     EXPECT_EQ(7, e.lower);
     EXPECT_EQ(8, e.upper);
 
     e = versions.get_edge({123, 9, 10}, 4);
-    EXPECT_EQ(123, e.loc_id);
+    EXPECT_EQ(123, e.key);
     EXPECT_EQ(3, e.lower);
     EXPECT_EQ(4, e.upper);
 
     e = versions.get_edge({123, 11, 12}, 4);
-    EXPECT_EQ(123, e.loc_id);
+    EXPECT_EQ(123, e.key);
     EXPECT_EQ(2, e.lower);
     EXPECT_EQ(5, e.upper);
 }
 
-TEST_F(DeltaVersionsTest, MultipleStep) {
+TEST_F(DeltaNITest, MultipleStep) {
     NIEdge e;
 
     e = versions.get_edge({123, 1, 8}, 3);
-    EXPECT_EQ(123, e.loc_id);
+    EXPECT_EQ(123, e.key);
     EXPECT_EQ(1, e.lower);
     EXPECT_EQ(8, e.upper);
 
     e = versions.get_edge({123, 2, 5}, 3);
-    EXPECT_EQ(123, e.loc_id);
+    EXPECT_EQ(123, e.key);
     EXPECT_EQ(4, e.lower);
     EXPECT_EQ(7, e.upper);
 
     e = versions.get_edge({123, 3, 4}, 3);
-    EXPECT_EQ(123, e.loc_id);
+    EXPECT_EQ(123, e.key);
     EXPECT_EQ(9, e.lower);
     EXPECT_EQ(10, e.upper);
 
     e = versions.get_edge({123, 6, 7}, 3);
-    EXPECT_EQ(123, e.loc_id);
+    EXPECT_EQ(123, e.key);
     EXPECT_EQ(5, e.lower);
     EXPECT_EQ(6, e.upper);
 
     e = versions.get_edge({123, 9, 10}, 3);
-    EXPECT_EQ(123, e.loc_id);
+    EXPECT_EQ(123, e.key);
     EXPECT_EQ(2, e.lower);
     EXPECT_EQ(3, e.upper);
 
     e = versions.get_edge({123, 11, 12}, 3);
-    EXPECT_EQ(123, e.loc_id);
+    EXPECT_EQ(123, e.key);
     EXPECT_EQ(11, e.lower);
     EXPECT_EQ(12, e.upper);
 }
 
-TEST_F(DeltaVersionsTest, Exists) {
+TEST_F(DeltaNITest, Exists) {
     // Version 0
     EXPECT_TRUE(versions.exists(1, 0));
     EXPECT_TRUE(versions.exists(2, 0));
@@ -439,7 +449,7 @@ TEST_F(DeltaVersionsTest, Exists) {
     EXPECT_TRUE(versions.exists(6));
 }
 
-TEST_F(DeltaVersionsTest, IsAncestor) {
+TEST_F(DeltaNITest, IsAncestor) {
     EXPECT_TRUE(versions.is_ancestor(1, 4, 0));
     EXPECT_TRUE(versions.is_ancestor(1, 3, 0));
     EXPECT_TRUE(versions.is_ancestor(1, 2, 0));
@@ -476,7 +486,7 @@ TEST_F(DeltaVersionsTest, IsAncestor) {
     EXPECT_TRUE(versions.is_ancestor(4, 3));
 }
 
-TEST_F(DeltaVersionsTest, NotIsAncestor) {
+TEST_F(DeltaNITest, NotIsAncestor) {
     EXPECT_FALSE(versions.is_ancestor(1, 1, 0));
     EXPECT_FALSE(versions.is_ancestor(1, 5, 0));
     EXPECT_FALSE(versions.is_ancestor(1, 6, 0));
@@ -641,21 +651,21 @@ TEST_F(DeltaVersionsTest, NotIsAncestor) {
     EXPECT_FALSE(versions.is_ancestor(6, 6, 4));
 }
 
-TEST_F(DeltaVersionsTest, Insert) {
-    EXPECT_THROW(versions.insert(7, 100), deltani_invalid_id);
-    EXPECT_THROW(versions.insert(3, 1), deltani_id_exists);
+TEST_F(DeltaNITest, Insert) {
+    EXPECT_THROW(versions.insert(100, 7, 7), deltani_invalid_key);
+    EXPECT_THROW(versions.insert(1, 3, 3), deltani_key_exists);
 
-    versions.insert(7, 3);
+    versions.insert(3, 7, 7);
 
     EXPECT_TRUE(versions.exists(7));
     EXPECT_TRUE(versions.is_ancestor(3, 7));
     EXPECT_TRUE(versions.is_ancestor(1, 7));
 }
 
-TEST_F(DeltaVersionsTest, Remove) {
-    EXPECT_THROW(versions.remove(100), deltani_invalid_id);
-    EXPECT_THROW(versions.remove(2), deltani_id_removed);
-    EXPECT_THROW(versions.remove(4), deltani_id_has_children);
+TEST_F(DeltaNITest, Remove) {
+    EXPECT_THROW(versions.remove(100), deltani_invalid_key);
+    EXPECT_THROW(versions.remove(2), deltani_key_removed);
+    EXPECT_THROW(versions.remove(4), deltani_key_has_children);
 
     versions.remove(5);
 
@@ -665,7 +675,7 @@ TEST_F(DeltaVersionsTest, Remove) {
     EXPECT_TRUE(versions.is_ancestor(1, 6));
 }
 
-TEST_F(DeltaVersionsTest, RemoveAll) {
+TEST_F(DeltaNITest, RemoveAll) {
     versions.remove(3);
     versions.remove(4);
     versions.remove(5);
@@ -680,12 +690,12 @@ TEST_F(DeltaVersionsTest, RemoveAll) {
     EXPECT_FALSE(versions.exists(6));
 }
 
-TEST_F(DeltaVersionsTest, Save) {
-    EXPECT_EQ(4, versions.save());
+TEST_F(DeltaNITest, Commit) {
+    EXPECT_EQ(4, versions.commit());
 
-    versions.insert(7, 3);
+    versions.insert(3, 7, 7);
 
-    EXPECT_EQ(5, versions.save());
+    EXPECT_EQ(5, versions.commit());
     EXPECT_TRUE(versions.exists(7, 5));
     EXPECT_TRUE(versions.is_ancestor(3, 7, 5));
     EXPECT_TRUE(versions.is_ancestor(1, 7, 5));
