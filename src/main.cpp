@@ -16,6 +16,28 @@
 #include "util.h"
 
 
+char const HELP_STRING[] = ""
+"Commands\n"
+"help\n"
+"    show this help\n"
+"search <id>\n"
+"    search location with given id\n"
+"exists [<version>] <id>\n"
+"    determine if id exists in given or latest version\n"
+"num_childs [<version>] <id>\n"
+"    print how many childs a given id has in given or latest version\n"
+"children [<version>] <id>\n"
+"    print all children of a given id in given or latest version\n"
+"is_ancestor [<version>] <parent> <child>\n"
+"    determines if an id is an ancestor of another id in given or latest version\n"
+"insert <id> <name> <parent>\n"
+"    inserts a new entry with an id and a name and appends it to a parent\n"
+"remove <id>\n"
+"    removes an id\n"
+"commit\n"
+"    commits all changes, generates a new version and prints the new version\n";
+
+
 char const MODE_STR_ADJ[] = "adj";
 char const MODE_STR_NI[] = "ni";
 char const MODE_STR_DELTANI[] = "deltani";
@@ -124,7 +146,7 @@ int main(int argc, char** argv) {
             if (cmd == "q" || cmd == "quit") {
                 break;
             } else if (cmd == "help") {
-                cout << "Help:" << endl;
+                cout << HELP_STRING;
             } else if (cmd == "s" || cmd == "search") {
                 uint32_t key = stream_ui(stream);
                 Location l = hierarchy->search(key);
